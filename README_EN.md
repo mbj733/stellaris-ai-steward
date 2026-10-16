@@ -2,6 +2,8 @@
 
 > **English** · [🇨🇳 简体中文](README.md)
 
+> 🌐 **Landing page**: <https://mbj733.github.io/stellaris-ai-steward/>
+
 A single-player Stellaris stewardship tool — auto-resolve events with a best-legal-choice engine,
 one-tap AI autopilot, a floating in-game panel (with a 中/EN language toggle), and a full audit trail.
 All operations are **runtime memory reads/writes on the running game process only**;
