@@ -1,5 +1,7 @@
 # Stellaris AI Steward · 群星 AI 托管
 
+> **简体中文** · [🇬🇧 English](README_EN.md)
+
 > **EN**: A single-player Stellaris stewardship tool — auto-resolve events with a best-legal-choice
 > engine, one-tap AI autopilot, a floating in-game panel, and a full audit trail.
 > All operations are **runtime memory reads/writes on the running game process only**;
@@ -88,7 +90,7 @@ python tools\hook_rw88.py read    # 内存钩子状态（武装表 / 改写数 /
 ## 🗺 路线 / Roadmap
 
 - [ ] 适配后续游戏版本（需重新定位函数地址）
-- [ ] 面板多语言（中/英）
+- [x] 面板多语言（中/英）
 - [ ] 更多决策维度（科技选择托管等）
 
 ## License

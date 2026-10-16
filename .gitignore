@@ -11,6 +11,8 @@ _brain_*.json
 _away_mode.flag
 _hai_ui*.json
 _hai_ui_closed.flag
+_hai_ui_lang.json
 data/*.json
 !data/README.md
 tools/_ghidra_*.log
+_shots/

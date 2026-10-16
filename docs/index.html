@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>群星 AI 托管 · Stellaris AI Steward</title>
+<meta name="description" content="单机《群星》辅助值守工具：事件自动按合法最优解处理、一键托管、游戏内悬浮面板、全程审计。">
+<meta name="color-scheme" content="dark">
+<style>
+:root{
+  --bg:#0d1622; --bg2:#0f1a29; --card:#131f33; --card2:#16233a;
+  --gold:#c9a75f; --gold-hi:#e8c97a; --gold-dim:rgba(201,167,95,.28);
+  --text:#e9e6dd; --muted:#93a3b8; --line:rgba(201,167,95,.22);
+  --green:#6fc98a;
+  --mono:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 560px at 82% -10%, rgba(201,167,95,.08), transparent 62%),
+    radial-gradient(900px 520px at -12% 32%, rgba(64,110,180,.12), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--text);
+  font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",Roboto,sans-serif;
+  line-height:1.68;
+  -webkit-font-smoothing:antialiased;
+}
+html[data-lang="zh"] .en{display:none!important}
+html[data-lang="en"] .zh{display:none!important}
+a{color:var(--gold);text-decoration:none}
+a:hover{color:var(--gold-hi)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+
+/* ---------- nav ---------- */
+nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(13,22,34,.86);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:58px;gap:14px}
+.logo{font-weight:700;letter-spacing:.4px;font-size:15px;color:var(--gold);white-space:nowrap}
+.nav-right{display:flex;align-items:center;gap:12px}
+.lang-switch{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang-switch button{
+  background:transparent;border:0;color:var(--muted);cursor:pointer;
+  font:inherit;font-size:13px;padding:5px 12px;transition:all .15s;
+}
+.lang-switch button:hover{color:var(--gold-hi)}
+.lang-switch button.active{background:var(--gold);color:#101820;font-weight:600}
+.gh-btn{
+  font-size:13px;border:1px solid var(--line);border-radius:8px;
+  padding:5px 12px;color:var(--text);transition:all .15s;white-space:nowrap;
+}
+.gh-btn:hover{border-color:var(--gold);color:var(--gold-hi)}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:46px;align-items:center;padding:74px 22px 66px}
+.kicker{
+  display:inline-block;font-size:12.5px;letter-spacing:2px;color:var(--gold);
+  border:1px solid var(--gold-dim);border-radius:999px;padding:3px 13px;margin-bottom:18px;
+  text-transform:uppercase;
+}
+h1{
+  font-size:46px;line-height:1.15;letter-spacing:.5px;
+  background:linear-gradient(120deg,#f2e2b3,var(--gold) 55%,#a8853f);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero .sub{font-size:15px;color:var(--muted);margin-top:4px;letter-spacing:.6px}
+.tag{font-size:16.5px;margin-top:18px;max-width:640px}
+.tag2{font-size:14px;color:var(--muted);margin-top:10px;max-width:640px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.badge{
+  font-size:12.5px;color:var(--muted);border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);border-radius:999px;padding:3px 12px;
+}
+.badge b{color:var(--gold);font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{
+  display:inline-block;border-radius:10px;padding:11px 22px;font-size:15px;
+  transition:transform .15s, box-shadow .15s, border-color .15s;
+}
+.btn.gold{background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:#12181f;font-weight:700}
+.btn.gold:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,167,95,.25);color:#12181f}
+.btn.ghost{border:1px solid var(--line);color:var(--text)}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold-hi);transform:translateY(-2px)}
+
+/* ---------- panel mockup ---------- */
+.hero-mock{display:flex;justify-content:center}
+.mock{
+  width:100%;max-width:390px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--gold-dim);
+  background:linear-gradient(180deg,#18233a,#111b2c);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.4) inset;
+  transform:rotate(.6deg);
+}
+.mock-titlebar{
+  display:flex;align-items:center;gap:9px;padding:11px 14px;
+  background:rgba(201,167,95,.10);border-bottom:1px solid var(--line);
+  font-size:13.5px;font-weight:600;color:var(--gold-hi);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.mock-lang{margin-left:auto;font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 8px}
+.mock-body{padding:15px 14px 16px}
+.mock-engine{
+  font-family:var(--mono);font-size:12.5px;color:#bcd0e8;
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:9px 11px;margin-bottom:13px;
+}
+.mock-engine i{color:var(--green);font-style:normal}
+.mock-btns{display:flex;gap:10px}
+.mbtn{
+  flex:1;text-align:center;font-size:13px;border-radius:8px;padding:8px 6px;border:1px solid var(--line);color:var(--text);
+}
+.mbtn.on{background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:#12181f;font-weight:700;border-color:transparent}
+.mock-cap{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+
+/* ---------- sections ---------- */
+section{padding:64px 0}
+section + section{border-top:1px solid rgba(255,255,255,.045)}
+h2{font-size:28px;letter-spacing:.4px;margin-bottom:8px}
+h2 .accent{color:var(--gold)}
+.sec-sub{color:var(--muted);font-size:14.5px;margin-bottom:34px}
+
+/* features */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.card{
+  background:linear-gradient(180deg,var(--card2),var(--card));
+  border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px 20px;
+  transition:transform .18s, border-color .18s, box-shadow .18s;
+}
+.card:hover{transform:translateY(-3px);border-color:var(--gold-dim);box-shadow:0 14px 34px rgba(0,0,0,.35)}
+.card .ico{font-size:22px;display:block;margin-bottom:10px}
+.card h3{font-size:17px;color:var(--gold-hi);margin-bottom:8px;letter-spacing:.3px}
+.card p{font-size:14.5px;color:#c6cfdd}
+.card p b{color:var(--gold);font-weight:600}
+
+/* install steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-bottom:22px}
+.step{position:relative;background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px 20px 20px}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(201,167,95,.14);border:1px solid var(--gold-dim);
+  color:var(--gold-hi);font-weight:700;font-size:14px;margin-bottom:12px;
+}
+.step h3{font-size:16px;margin-bottom:7px}
+.step p{font-size:14px;color:#c6cfdd}
+.step code, .note code, td code, p code{
+  font-family:var(--mono);font-size:.92em;color:var(--gold-hi);
+  background:rgba(201,167,95,.09);border:1px solid rgba(201,167,95,.16);
+  border-radius:6px;padding:1px 7px;white-space:nowrap;
+}
+.note{
+  font-size:14px;color:#c6cfdd;border-left:3px solid var(--gold);
+  background:rgba(201,167,95,.06);border-radius:0 10px 10px 0;padding:13px 18px;
+}
+
+/* usage table */
+.tbl-wrap{overflow-x:auto;border:1px solid rgba(255,255,255,.08);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+th,td{padding:13px 18px;text-align:left;vertical-align:top}
+thead th{
+  background:rgba(201,167,95,.09);color:var(--gold-hi);
+  font-size:13px;letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--line);
+}
+tbody tr + tr{border-top:1px solid rgba(255,255,255,.06)}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+td:first-child{white-space:nowrap}
+.checklist li{margin:12px 0 12px 4px;list-style:none;padding-left:26px;position:relative;color:#c6cfdd;font-size:15px}
+.checklist li::before{content:"◆";position:absolute;left:0;top:1px;color:var(--gold);font-size:11px}
+
+/* disclaimer */
+.disc{
+  border:1px solid var(--gold-dim);border-radius:16px;
+  background:linear-gradient(180deg,rgba(201,167,95,.07),rgba(201,167,95,.02));
+  padding:30px 30px 26px;
+}
+.disc h2{font-size:22px;margin-bottom:16px}
+.disc ol{margin-left:20px}
+.disc li{margin:10px 0;font-size:14.5px;color:#cfd8e4}
+.disc b{color:var(--gold-hi);font-weight:600}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:34px 0 46px;margin-top:10px}
+.foot-links{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin-bottom:14px}
+.muted{color:var(--muted);font-size:13px}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;padding-top:50px;gap:36px}
+  h1{font-size:36px}
+  .nav-inner{height:auto;padding:10px 0;flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <div class="logo">✦ <span class="zh">群星 AI 托管</span><span class="en">Stellaris AI Steward</span></div>
+    <div class="nav-right">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-set="zh">中文</button>
+        <button type="button" data-set="en">English</button>
+      </div>
+      <a class="gh-btn" href="https://github.com/mbj733/stellaris-ai-steward" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-text">
+    <span class="kicker"><span class="zh">单机 · 辅助值守</span><span class="en">Single-player · Stewardship</span></span>
+    <h1 class="zh">群星 AI 托管</h1>
+    <h1 class="en">Stellaris AI Steward</h1>
+    <div class="sub zh">Stellaris AI Steward</div>
+    <div class="sub en">群星 AI 托管</div>
+    <p class="tag zh">单机《群星》辅助值守工具——事件自动按「合法最优解」处理、一键托管、游戏内悬浮面板、全程审计。</p>
+    <p class="tag en">A single-player Stellaris stewardship tool — auto-resolve events with a best-legal-choice engine, one-tap AI autopilot, a floating in-game panel, and a full audit trail.</p>
+    <p class="tag2 zh">所有操作均为对运行中游戏进程的<b>临时内存读写</b>，不修改任何游戏文件，游戏退出即全部还原。</p>
+    <p class="tag2 en">All operations are <b>runtime memory reads/writes on the running game process only</b> — no game file is ever modified, and everything reverts when the game exits.</p>
+    <div class="badges">
+      <span class="badge"><b>Windows</b></span>
+      <span class="badge"><b>Python</b> 3.10+</span>
+      <span class="badge"><b>Stellaris</b> 4.5.2</span>
+      <span class="badge"><b>MIT</b> License</span>
+      <span class="badge">v0.1.0</span>
+    </div>
+    <div class="cta">
+      <a class="btn gold zh" href="https://github.com/mbj733/stellaris-ai-steward" target="_blank" rel="noopener">前往 GitHub 仓库</a>
+      <a class="btn gold en" href="https://github.com/mbj733/stellaris-ai-steward" target="_blank" rel="noopener">View on GitHub</a>
+      <a class="btn ghost zh" href="https://github.com/mbj733/stellaris-ai-steward/blob/main/README.md" target="_blank" rel="noopener">中文说明</a>
+      <a class="btn ghost en" href="https://github.com/mbj733/stellaris-ai-steward/blob/main/README_EN.md" target="_blank" rel="noopener">English README</a>
+    </div>
+  </div>
+
+  <div class="hero-mock">
+    <div>
+      <div class="mock">
+        <div class="mock-titlebar">
+          <span class="dot"></span>
+          <span data-zh="群星 AI 托管" data-en="Stellaris AI Steward">群星 AI 托管</span>
+          <span class="mock-lang">中 / EN</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-engine" data-zh="武装 12 条 · 改写 34 次 · 归属拦截 2 · 待决 0 · ⟨Running⟩" data-en="armed 12 · rewrites 34 · blocked 2 · pending 0 · ⟨Running⟩">武装 12 条 · 改写 34 次 · 归属拦截 2 · 待决 0 · ⟨Running⟩</div>
+          <div class="mock-btns">
+            <span class="mbtn on" data-zh="切换 开/关" data-en="Toggle ON/OFF">切换 开/关</span>
+            <span class="mbtn" data-zh="离开模式" data-en="Away mode">离开模式</span>
+          </div>
+        </div>
+      </div>
+      <div class="mock-cap zh">游戏内悬浮面板 · 概念示意</div>
+      <div class="mock-cap en">The in-game floating panel · concept preview</div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2><span class="zh">功能<span class="accent">一览</span></span><span class="en">Feature <span class="accent">highlights</span></span></h2>
+    <p class="sec-sub zh">从事件应答到面板值守，一切围绕着「像你在玩，但从不失误」。</p>
+    <p class="sec-sub en">From event resolution to idle stewardship — it plays like you would, but with a rulebook.</p>
+    <div class="cards">
+      <div class="card">
+        <span class="ico">⚡</span>
+        <h3><span class="zh">事件全自动</span><span class="en">Automatic event resolution</span></h3>
+        <p class="zh">单选项直接处理；多选项按「参谋偏好」逐个探测，<b>取游戏接受的第一个</b>（= 合法且最优）。</p>
+        <p class="en">Single-option events handled instantly; multi-option events are probed in preference order and <b>the first choice accepted by the game</b> is taken — the best legal choice.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🎛</span>
+        <h3><span class="zh">一键托管</span><span class="en">One-tap autopilot</span></h3>
+        <p class="zh">面板按钮 / <b>F8</b> 全局热键，切换游戏自带的 <b>human_ai</b> 托管——帝国由游戏 AI 自动发展，决策受本工具把关。</p>
+        <p class="en">Panel button / <b>F8</b> global hotkey toggles the game's built-in <b>human_ai</b> autopilot — your empire develops automatically, with every decision policed by this tool.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🧠</span>
+        <h3><span class="zh">决策改写</span><span class="en">Decision rewriting</span></h3>
+        <p class="zh">已学习的多选项事件家族自动「武装」——无论选择来自 AI 托管还是游戏自发结算，都会被替换为参谋决策；<b>归属校验保证绝不触碰其他帝国</b>。</p>
+        <p class="en">Learned multi-option event families are <b>armed</b> — any selection, from any source, is replaced with the steward's choice at execution time. An ownership guard ensures <b>other empires are never touched</b>.</p>
+      </div>
+      <div class="card">
+        <span class="ico">📌</span>
+        <h3><span class="zh">悬浮面板</span><span class="en">Floating panel</span></h3>
+        <p class="zh">随游戏自动出现，实时显示 <b>武装 / 改写 / 归属拦截 / 待决</b>；可拖动、可关闭、<b>中 / EN 一键切换</b>。</p>
+        <p class="en">Appears automatically with the game; live <b>armed / rewrites / blocked / pending</b> counters; draggable, closable, with a <b>中/EN toggle</b>.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🛡</span>
+        <h3><span class="zh">审计与自愈</span><span class="en">Audit &amp; self-healing</span></h3>
+        <p class="zh">每 10 分钟健康心跳；钩子 / 面板 / 进程全部自动恢复；一切决策双侧留痕。</p>
+        <p class="en">10-minute health heartbeats; hooks, panel and processes all recover automatically; every decision is logged on both the game side and the tool side.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2><span class="zh">三步<span class="accent">安装</span></span><span class="en">Install in <span class="accent">three steps</span></span></h2>
+    <p class="sec-sub zh">要求：Windows + Python 3.10+ + Stellaris 4.5.2</p>
+    <p class="sec-sub en">Requirements: Windows + Python 3.10+ + Stellaris 4.5.2</p>
+    <div class="steps">
+      <div class="step">
+        <span class="num">1</span>
+        <h3><span class="zh">安装 Python</span><span class="en">Install Python</span></h3>
+        <p class="zh">从 <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org</a> 下载安装（务必勾选 <code>Add Python to PATH</code>）。</p>
+        <p class="en">Download from <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org</a> (make sure to check <code>Add Python to PATH</code>).</p>
+      </div>
+      <div class="step">
+        <span class="num">2</span>
+        <h3><span class="zh">双击安装脚本</span><span class="en">Double-click the installer</span></h3>
+        <p class="zh">双击 <code>install.bat</code>：自动创建虚拟环境、安装依赖、可选开机自启、冒烟自检。</p>
+        <p class="en">Run <code>install.bat</code>: it creates a venv, installs dependencies, offers a startup entry and runs a smoke self-test.</p>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <h3><span class="zh">启动游戏</span><span class="en">Launch the game</span></h3>
+        <p class="zh">面板自动出现，值守开始。<b>不需要</b>把任何文件放进游戏目录。</p>
+        <p class="en">The panel appears by itself. <b>Nothing</b> needs to be copied into the game folder.</p>
+      </div>
+    </div>
+    <div class="note zh">版本说明：本工具针对 Stellaris <b>4.5.2 (Cygnus)</b> 的内存布局制作，内置版本指纹校验——游戏版本不符时会<b>拒绝运行</b>（防止改错地址导致游戏崩溃）。</div>
+    <div class="note en">Version note: built against Stellaris <b>4.5.2 (Cygnus)</b> with a version fingerprint guard — the tool <b>refuses to run</b> on a different game build (to avoid corrupting memory).</div>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="wrap">
+    <h2><span class="zh">面板<span class="accent">速查</span></span><span class="en">Panel <span class="accent">cheat sheet</span></span></h2>
+    <p class="sec-sub zh">上班挂机 = 两个开关都开；回来自己玩 = 两个都关。</p>
+    <p class="sec-sub en">Idling at work = both switches ON; playing yourself = both OFF.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-zh="控件" data-en="Control">控件</th>
+            <th data-zh="作用" data-en="What it does">作用</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code data-zh="「切换 开/关」/ F8" data-en="Toggle ON/OFF / F8">「切换 开/关」/ F8</code></td>
+            <td data-zh="托管：开 = 游戏 AI 替你发展帝国（决策受本工具把关）；关 = 帝国操作留给你" data-en="Autopilot: ON = the game AI develops your empire (decisions policed by this tool); OFF = you keep full manual control">托管：开 = 游戏 AI 替你发展帝国（决策受本工具把关）；关 = 帝国操作留给你</td>
+          </tr>
+          <tr>
+            <td><code data-zh="「离开模式」" data-en="Away mode">「离开模式」</code></td>
+            <td data-zh="人不在时打开：事件全自动应答 + 时间防冻结" data-en="Turn on when you step away: events get resolved automatically and the game clock never freezes">人不在时打开：事件全自动应答 + 时间防冻结</td>
+          </tr>
+          <tr>
+            <td><code data-zh="引擎状态行" data-en="Engine line">引擎状态行</code></td>
+            <td data-zh="实时读数：武装 N 条 · 改写 M 次 · 归属拦截 B · 待决 K" data-en="Live counters: armed N · rewrites M · blocked B · pending K">实时读数：武装 N 条 · 改写 M 次 · 归属拦截 B · 待决 K</td>
+          </tr>
+          <tr>
+            <td><code>中 / EN</code></td>
+            <td data-zh="面板语言切换（记忆上次选择）" data-en="Panel language toggle (remembers your choice)">面板语言切换（记忆上次选择）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="disclaimer">
+  <div class="wrap">
+    <div class="disc">
+      <h2><span class="zh">⚠️ 免责声明</span><span class="en">⚠️ Disclaimer</span></h2>
+      <ol class="zh">
+        <li><b>仅限单人游戏使用</b>；请勿在联机对局中使用（联机使用后果自负）。</li>
+        <li>本工具<b>不修改任何游戏文件</b>：所有操作均为对运行中进程的临时内存读写，游戏重启即完全还原。</li>
+        <li>本工具不含任何游戏文件、美术资源或本地化文本，<b>不提供游戏本体下载</b>；Stellaris® 及相关内容版权归 Paradox Interactive 所有。本项目为社区个人作品，<b>与 Paradox Interactive 无任何关联，亦未获其背书</b>。</li>
+        <li>使用前请<b>备份存档</b>；因使用本工具造成的任何存档或游戏问题，由使用者自行承担。</li>
+        <li>本项目仅供<b>个人单机自动化与研究学习</b>用途。</li>
+      </ol>
+      <ol class="en">
+        <li><b>Single-player use only</b> — do not use in multiplayer sessions.</li>
+        <li><b>Modifies nothing on disk</b>: runtime memory only, fully reverted when the game exits.</li>
+        <li>Contains no game files, art, or localization text; <b>does not provide the game itself</b>. Stellaris® and related content are the property of Paradox Interactive. This is a community project, <b>not affiliated with or endorsed by Paradox Interactive</b>.</li>
+        <li><b>Back up your saves</b>; any save or game issue caused by using this tool is your own responsibility.</li>
+        <li>For <b>personal single-player automation and educational/research purposes</b> only.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="https://github.com/mbj733/stellaris-ai-steward/blob/main/README.md" target="_blank" rel="noopener">中文 README</a>
+      <a href="https://github.com/mbj733/stellaris-ai-steward/blob/main/README_EN.md" target="_blank" rel="noopener">English README</a>
+      <a href="https://github.com/mbj733/stellaris-ai-steward" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/mbj733/stellaris-ai-steward/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+    <p class="muted zh">社区个人作品 · 与 Paradox Interactive 无关联 · 仅限单人游戏使用</p>
+    <p class="muted en">Community project · Not affiliated with Paradox Interactive · Single-player use only</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var KEY = "sas-lang";
+  function apply(lang){
+    var isZh = lang !== "en";
+    lang = isZh ? "zh" : "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    document.documentElement.lang = isZh ? "zh-CN" : "en";
+    document.querySelectorAll("[data-zh]").forEach(function(el){
+      var v = isZh ? el.getAttribute("data-zh") : el.getAttribute("data-en");
+      if (v !== null) el.textContent = v;
+    });
+    document.title = isZh ? "群星 AI 托管 · Stellaris AI Steward"
+                          : "Stellaris AI Steward · Single-player stewardship tool";
+    var meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", isZh
+      ? "单机《群星》辅助值守工具：事件自动按合法最优解处理、一键托管、游戏内悬浮面板、全程审计。"
+      : "A single-player Stellaris stewardship tool: best-legal-choice event engine, one-tap autopilot, floating panel, full audit trail.");
+    document.querySelectorAll(".lang-switch button").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-set") === lang);
+    });
+  }
+  window.setLang = function(lang){
+    try { localStorage.setItem(KEY, lang); } catch(e){}
+    apply(lang);
+  };
+  document.querySelectorAll(".lang-switch button").forEach(function(b){
+    b.addEventListener("click", function(){ window.setLang(b.getAttribute("data-set")); });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch(e){}
+  var qp = null;
+  try { qp = new URLSearchParams(location.search).get("lang"); } catch(e){}
+  var auto = ((navigator.language || navigator.userLanguage || "").toLowerCase().indexOf("zh") === 0) ? "zh" : "en";
+  apply(qp || saved || auto);
+})();
+</script>
+</body>
+</html>

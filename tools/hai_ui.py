@@ -39,6 +39,61 @@ FG_OFF = "#9aa4b2"
 FG_ERR = "#e06c75"
 FG_DIM = "#8b8468"
 
+LANG_FILE = Path(__file__).resolve().parent / "_hai_ui_lang.json"
+
+TEXTS = {
+    "zh": {
+        "win_title": "AI 托管",
+        "app_title": "AI 托管 · STELLARIS",
+        "checking": "检查中…",
+        "btn": "切换　开 / 关",
+        "away_on": "离开模式：开 ●",
+        "away_off": "离开模式：关",
+        "hotkey": "F8 全局热键",
+        "hotkey_na": "F8 热键不可用（用按钮）",
+        "waiting": "等待游戏…",
+        "wait_run": "等待游戏运行…",
+        "state_on": "托管：开启中 ●",
+        "state_off": "托管：已关闭",
+        "pause_on": "游戏：暂停中（托管不推进）",
+        "pause_run": "游戏：运行中",
+        "pause_unk": "游戏：状态未知",
+        "logpfx": "日志: ",
+        "eng": "引擎: 武装%d · 改写%d · 拦截%d · 待决%s",
+        "eng_nohook": "引擎: 钩子未装（游戏重启后自动重装）",
+        "eng_dash": "引擎: —",
+        "sent": "已发送切换",
+        "fail": "失败",
+        "takes": "（1~3 秒生效）",
+        "lang_btn": "EN",
+    },
+    "en": {
+        "win_title": "AI Steward",
+        "app_title": "AI STEWARD · STELLARIS",
+        "checking": "Checking...",
+        "btn": "Toggle  ON / OFF",
+        "away_on": "Away mode: ON ●",
+        "away_off": "Away mode: OFF",
+        "hotkey": "F8 global hotkey",
+        "hotkey_na": "F8 unavailable (use button)",
+        "waiting": "Waiting for game...",
+        "wait_run": "Waiting for game...",
+        "state_on": "Autopilot: ON ●",
+        "state_off": "Autopilot: OFF",
+        "pause_on": "Game: paused (autopilot idle)",
+        "pause_run": "Game: running",
+        "pause_unk": "Game: unknown state",
+        "logpfx": "Log: ",
+        "eng": "Engine: armed %d · rewrites %d · blocked %d · pending %s",
+        "eng_nohook": "Engine: hook not installed (auto-reinstalls)",
+        "eng_dash": "Engine: —",
+        "sent": "toggle sent",
+        "fail": "failed",
+        "takes": " (1-3 s)",
+        "lang_btn": "中",
+    },
+}
+
 
 def game_running():
     try:
@@ -61,6 +116,13 @@ class App:
         self.gone_since = None
         self.drag = (0, 0)
         self.last_toggle = 0.0
+        self.lang = "zh"
+        try:
+            _d = json.loads(LANG_FILE.read_text(encoding="utf-8"))
+            if _d.get("lang") in ("zh", "en"):
+                self.lang = _d["lang"]
+        except Exception:
+            pass
         try:            # 面板已在运行 → 清掉"用户关闭"标记（下次异常消失可自动补拉）
             if CLOSED_FLAG.exists():
                 CLOSED_FLAG.unlink()
@@ -68,7 +130,7 @@ class App:
             pass
 
         self.root = tk.Tk()
-        self.root.title("AI 托管")
+        self.root.title(self.t("win_title"))
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         try:
@@ -83,18 +145,22 @@ class App:
 
         bar = tk.Frame(wrap, bg=BG)
         bar.pack(fill="x", padx=8, pady=(6, 0))
-        title = tk.Label(bar, text="AI 托管 · STELLARIS", font=("Microsoft YaHei UI", 8, "bold"),
-                         fg=GOLD, bg=BG)
-        title.pack(side="left")
+        self.title_lbl = tk.Label(bar, text=self.t("app_title"), font=("Microsoft YaHei UI", 8, "bold"),
+                                  fg=GOLD, bg=BG)
+        self.title_lbl.pack(side="left")
+        self.lang_lbl = tk.Label(bar, text=self.t("lang_btn"),
+                                 font=("Microsoft YaHei UI", 8, "bold"), fg=FG_DIM, bg=BG, cursor="hand2")
+        self.lang_lbl.pack(side="right", padx=(0, 8))
+        self.lang_lbl.bind("<Button-1>", lambda e: self.switch_lang())
         close = tk.Label(bar, text="✕", font=("Microsoft YaHei UI", 9, "bold"),
                          fg=FG_DIM, bg=BG, cursor="hand2")
         close.pack(side="right")
         close.bind("<Button-1>", lambda e: self.on_close())
-        for w in (bar, title):
+        for w in (bar, self.title_lbl):
             w.bind("<Button-1>", self._drag_start)
             w.bind("<B1-Motion>", self._drag_move)
 
-        self.state_lbl = tk.Label(wrap, text="检查中…", font=("Microsoft YaHei UI", 15, "bold"),
+        self.state_lbl = tk.Label(wrap, text=self.t("checking"), font=("Microsoft YaHei UI", 15, "bold"),
                                   fg=FG_OFF, bg=BG)
         self.state_lbl.pack(padx=16, pady=(4, 2))
         self.state_lbl.bind("<Button-1>", self._drag_start)
@@ -104,7 +170,7 @@ class App:
         self.sub_lbl.pack(padx=16, pady=(0, 4))
 
         self.btn = tk.Button(
-            wrap, text="切换　开 / 关", command=self.request_toggle,
+            wrap, text=self.t("btn"), command=self.request_toggle,
             font=("Microsoft YaHei UI", 10), bg=BG2, fg=FG,
             activebackground="#22375c", activeforeground="#ffffff",
             relief="flat", padx=10, pady=6, bd=0,
@@ -112,14 +178,14 @@ class App:
         self.btn.pack(padx=14, pady=(2, 4), fill="x")
 
         self.away_btn = tk.Button(
-            wrap, text="离开模式：关", command=self.toggle_away,
+            wrap, text=self.t("away_off"), command=self.toggle_away,
             font=("Microsoft YaHei UI", 9), bg=BG, fg=FG_DIM,
             activebackground="#1d2c46", activeforeground=FG,
             relief="flat", bd=0, padx=8, pady=3,
             highlightthickness=1, highlightbackground="#3a4757", highlightcolor="#3a4757")
         self.away_btn.pack(padx=14, pady=(0, 2), fill="x")
 
-        self.info_lbl = tk.Label(wrap, text="F8 全局热键", font=("Microsoft YaHei UI", 8),
+        self.info_lbl = tk.Label(wrap, text=self.t("hotkey"), font=("Microsoft YaHei UI", 8),
                                  fg="#6d7686", bg=BG)
         self.info_lbl.pack(padx=16, pady=(0, 8))
 
@@ -127,7 +193,7 @@ class App:
                                 fg="#5f6b7d", bg=BG, wraplength=170, justify="left")
         self.adv_lbl.pack(padx=16, pady=(0, 8))
         self._log_t = 0.0
-        self.eng_lbl = tk.Label(wrap, text="引擎: —", font=("Microsoft YaHei UI", 8),
+        self.eng_lbl = tk.Label(wrap, text=self.t("eng_dash"), font=("Microsoft YaHei UI", 8),
                                 fg="#7f8ea3", bg=BG, wraplength=170, justify="left")
         self.eng_lbl.pack(padx=16, pady=(0, 8))
         self._eng_t = 0.0
@@ -138,8 +204,9 @@ class App:
             self.kb = True
         except Exception:
             self.kb = False
-            self.info_lbl.config(text="F8 热键不可用（用按钮）")
+            self.info_lbl.config(text=self.t("hotkey_na"))
 
+        self.apply_lang()
         self.tick()
         self.root.mainloop()
 
@@ -149,6 +216,31 @@ class App:
 
     def _drag_move(self, e):
         self.root.geometry(f"+{e.x_root - self.drag[0]}+{e.y_root - self.drag[1]}")
+
+    # ---------- 语言 ----------
+    def t(self, key):
+        return TEXTS.get(self.lang, TEXTS["zh"]).get(key, key)
+
+    def switch_lang(self):
+        self.lang = "en" if self.lang == "zh" else "zh"
+        try:
+            LANG_FILE.write_text(json.dumps({"lang": self.lang}), encoding="utf-8")
+        except Exception:
+            pass
+        self.apply_lang()
+
+    def apply_lang(self):
+        try:
+            self.root.title(self.t("win_title"))
+            self.title_lbl.config(text=self.t("app_title"))
+            self.lang_lbl.config(text=self.t("lang_btn"))
+            self.btn.config(text=self.t("btn"))
+            self.info_lbl.config(text=self.t("hotkey") if getattr(self, "kb", False) else self.t("hotkey_na"))
+            self.away_btn.config(text=(self.t("away_on") if AWAY_FILE.exists() else self.t("away_off")))
+            self.eng_lbl.config(text=self.t("eng_dash"))
+            self.state_lbl.config(text=self.t("checking"))
+        except Exception:
+            pass
 
     def _load_pos(self):
         try:
@@ -233,7 +325,7 @@ class App:
     def _tick_inner(self):
         away = AWAY_FILE.exists()
         self.away_btn.config(
-            text=("离开模式：开 ●" if away else "离开模式：关"),
+            text=(self.t("away_on") if away else self.t("away_off")),
             fg=(FG_ON if away else FG_DIM))
         # 决策日志最新一条 → 面板显示（每 5 秒刷新）
         if time.time() - self._log_t > 5:
@@ -248,13 +340,13 @@ class App:
                         parts = line.split("  ", 1)
                         if len(parts) > 1:
                             line = parts[1]
-                        self.adv_lbl.config(text="日志: " + line[:58])
+                        self.adv_lbl.config(text=self.t("logpfx") + line[:58])
             except Exception:
                 pass
         if not self._ensure_open():
             if game_running():
                 self.gone_since = None
-                txt = self.last_err or "等待游戏…"
+                txt = self.last_err or self.t("waiting")
                 self.state_lbl.config(text=txt[:22], fg=FG_ERR)
             else:
                 if self.gone_since is None:
@@ -262,7 +354,7 @@ class App:
                 elif time.time() - self.gone_since > 45:
                     self._close(by_user=False)  # 游戏关闭 → 面板自动退出（下次由看门狗拉起）
                     return
-                self.state_lbl.config(text="等待游戏运行…", fg="#5c6472")
+                self.state_lbl.config(text=self.t("wait_run"), fg="#5c6472")
                 self.sub_lbl.config(text="")
             return
 
@@ -290,9 +382,9 @@ class App:
                     import evt_select as _es
                     pd = _es.pending_events(self.h, self.base)
                     npd = str(len(pd)) if pd is not None else "?"
-                    self.eng_lbl.config(text="引擎: 武装%d · 改写%d · 拦截%d · 待决%s" % (nsl, rwn, blk, npd))
+                    self.eng_lbl.config(text=self.t("eng") % (nsl, rwn, blk, npd))
                 else:
-                    self.eng_lbl.config(text="引擎: 钩子未装（游戏重启后自动重装）")
+                    self.eng_lbl.config(text=self.t("eng_nohook"))
             except Exception:
                 pass
 
@@ -300,25 +392,25 @@ class App:
             self.pending = False
             self.last_toggle = time.time()
             r = ce.execute_command(self.h, self.base, "human_ai")
-            msg = r.get("message") or ("已发送切换" if r["ok"] else "失败")
-            self.info_lbl.config(text=f"{msg}（1~3 秒生效）")
+            msg = r.get("message") or (self.t("sent") if r["ok"] else self.t("fail"))
+            self.info_lbl.config(text=f"{msg}{self.t('takes')}")
             flag = ce.read_flag(self.h, self.base, ce.RVA_HUMAN_AI)
             if flag is None:
                 self._drop()
                 return
 
         if flag == 1:
-            self.state_lbl.config(text="托管：开启中 ●", fg=FG_ON)
+            self.state_lbl.config(text=self.t("state_on"), fg=FG_ON)
         else:
-            self.state_lbl.config(text="托管：已关闭", fg=FG_OFF)
+            self.state_lbl.config(text=self.t("state_off"), fg=FG_OFF)
 
         pv = ce.read_pause(self.h, self.base)
         if pv == 1:
-            self.sub_lbl.config(text="游戏：暂停中（托管不推进）", fg="#e0a458")
+            self.sub_lbl.config(text=self.t("pause_on"), fg="#e0a458")
         elif pv == 0:
-            self.sub_lbl.config(text="游戏：运行中", fg=FG_DIM)
+            self.sub_lbl.config(text=self.t("pause_run"), fg=FG_DIM)
         else:
-            self.sub_lbl.config(text="游戏：状态未知", fg=FG_DIM)
+            self.sub_lbl.config(text=self.t("pause_unk"), fg=FG_DIM)
 
 
 def selftest():
