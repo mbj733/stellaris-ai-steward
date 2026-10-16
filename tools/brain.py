@@ -151,6 +151,7 @@ class Brain:
         self.cnt_single = 0     # 本进程：单选项成功数
         self.cnt_fail = 0       # 本进程：失败数
         self.prev_mil, self.last_techs, self.last_fleet, self.fleet_streak = load_state()
+        self.prev_own_wars = None
         self.last_r5 = 0.0
         self.last_vals = None
         self.prev_advs = ""
@@ -719,6 +720,18 @@ class Brain:
             _sv, gs2 = sr.load()
             d = sr.digest(gs2)
             log("[R5] 任务摘要：" + sr.digest_line(gs2))
+            # R9 战争守护：我方战争数变化即报警（新战争 / 战争结束/被附庸）
+            ow = int(d.get("own_wars") or 0)
+            if self.prev_own_wars is None:
+                self.prev_own_wars = ow
+            elif ow != self.prev_own_wars:
+                if ow > self.prev_own_wars:
+                    log(f"[R9] ⚠ 战争警报：我方战争 {self.prev_own_wars} → {ow}（新战争爆发！"
+                        f"挂机中由托管 AI 应战；亡国级目标请尽快回来看）")
+                else:
+                    log(f"[R9] 战争状态：我方战争 {self.prev_own_wars} → {ow}（战争结束——"
+                        f"变附属国/割地等条款请检查外交状态）")
+                self.prev_own_wars = ow
             mp = d.get("military_power")
             if mp:
                 if self.prev_mil and mp < self.prev_mil * 0.8:
