@@ -66,15 +66,17 @@ NEG2 = {"kill_leader", "kill_pop", "destroy_fleet", "destroy_planet", "lose_lead
         "kill_army", "destroy_station", "scrap_fleet"}
 
 
-def _walk_keys(blk, bag, depth=0):
+def _walk_keys(blk, bag, depth=0, skip_rl=False):
     if depth > 8 or blk is None or blk[0] != "blk":
         return
     for (typ, k, op, v) in blk[3]:
         if typ == "kv":
+            if skip_rl and k == "random_list":
+                continue
             if k not in NEUTRAL:
                 bag.append(k)
             if v[0] == "blk":
-                _walk_keys(v, bag, depth + 1)
+                _walk_keys(v, bag, depth + 1, skip_rl)
         elif typ == "k" and k not in NEUTRAL:
             bag.append(k)
 
@@ -95,7 +97,7 @@ def _mod_index():
     return _MOD_IDX
 
 
-def _collect_mod_refs(blk, out, depth=0):
+def _collect_mod_refs(blk, out, depth=0, skip_rl=False):
     """递归收集 add_modifier / remove_modifier 引用：[(动作, 名称, days)]"""
     if depth > 10 or blk is None or blk[0] != "blk":
         return
@@ -115,7 +117,9 @@ def _collect_mod_refs(blk, out, depth=0):
                         pass
             out.append((k, name, days))
         else:
-            _collect_mod_refs(v, out, depth + 1)
+            if skip_rl and k == "random_list":
+                continue
+            _collect_mod_refs(v, out, depth + 1, skip_rl)
 
 
 def _mod_duration_factor(days):
@@ -229,7 +233,7 @@ def _pairs_of(block):
     return pairs
 
 
-def _collect_resources(blk, out, depth=0):
+def _collect_resources(blk, out, depth=0, skip_rl=False):
     """递归收集选项树里的 add_resource（互斥分支的同类资源后续取最大绝对值去重）"""
     if depth > 10 or blk is None or blk[0] != "blk":
         return
@@ -238,8 +242,10 @@ def _collect_resources(blk, out, depth=0):
             continue
         if k == "add_resource" and v[0] == "blk":
             out.extend(_pairs_of(v))
+        elif skip_rl and k == "random_list":
+            continue
         elif v[0] == "blk":
-            _collect_resources(v, out, depth + 1)
+            _collect_resources(v, out, depth + 1, skip_rl)
 
 
 def _resource_gain(pairs, ctx, reasons, score):
@@ -298,84 +304,9 @@ def analyze(eid):
             opts.append(ov)
     out = {}
     for i, ov in enumerate(opts):
-        bag = []
-        _walk_keys(ov, bag)
         seen = set()
-        score = 0
         reasons = []
-        for key in bag:
-            if key in seen:
-                continue
-            seen.add(key)
-            if key in POS4:
-                score += 4
-                reasons.append("+4 " + key)
-            elif key in POS3:
-                score += 3
-                reasons.append("+3 " + key)
-            elif key in UNCERTAIN:
-                score += 1
-                reasons.append("+1 " + key + "（方向未判定）")
-            elif key in POS2:
-                score += 2
-                reasons.append("+2 " + key)
-            elif key in POS1:
-                score += 1
-                reasons.append("+1 " + key)
-            elif key in NEG1:
-                score -= 1
-                reasons.append("-1 " + key)
-            elif key in NEG2:
-                score -= 2
-                reasons.append("-2 " + key)
-        # 参数感知：递归收集 add_resource（含负数成本 / 顶上限 / 低储备加权，互斥分支去重）
-        pairs = []
-        _collect_resources(ov, pairs)
-        if pairs:
-            score = _resource_gain(pairs, ctx, reasons, score)
-        # 参数感知：add_modifier / remove_modifier（方向由 modifier_index 判定，时长加权）
-        mods = []
-        _collect_mod_refs(ov, mods)
-        best_mod = {}
-        for (act, mname, mdays) in mods:
-            keym = (act, mname)
-            if keym not in best_mod or _mod_duration_factor(mdays) > _mod_duration_factor(best_mod[keym]):
-                best_mod[keym] = mdays
-        m_idx = _mod_index()
-        for (act, mname), mdays in best_mod.items():
-            if not mname:
-                score += 1 if act == "add_modifier" else -1
-                reasons.append("±1 %s（未命名，方向未判定）" % act)
-                continue
-            ent = m_idx.get(mname)
-            msc = ent.get("score") if isinstance(ent, dict) else None
-            if not msc:
-                score += 1 if act == "add_modifier" else -1
-                reasons.append("±1 %s %s（未收录/中性，方向未判定）" % (act, mname))
-                continue
-            v = msc * _mod_duration_factor(mdays)
-            if act == "remove_modifier":
-                v = -v
-            score += v
-            reasons.append("%+.1f %s %s" % (v, act, mname))
-        # 持续月收益的顶上限提示（递归）
-        def _note_monthly(blk, depth=0):
-            if depth > 10 or blk is None or blk[0] != "blk":
-                return
-            for (t2, k2, o2, v2) in blk[3]:
-                if t2 != "kv" or v2 is None:
-                    continue
-                if k2 == "add_monthly_resource_mult" and v2[0] == "blk":
-                    res = None
-                    for (t3, k3, o3, v3) in v2[3]:
-                        if t3 == "kv" and k3 == "resource" and v3 and v3[0] in ("tok", "str"):
-                            res = v3[3]
-                    if res and res in CAPS and ctx["resources"].get(res) is not None \
-                            and ctx["resources"][res] >= CAPS[res] - 2:
-                        reasons.append("→ 持续 %s 收益（已顶上限，价值降低）" % res)
-                elif v2[0] == "blk":
-                    _note_monthly(v2, depth + 1)
-        _note_monthly(ov)
+        score = _score_full(ov, ctx, seen, reasons)
         out[i] = {"score": round(score, 1), "keys": sorted(seen), "reasons": reasons}
     if not out:
         return {"error": "无选项"}
@@ -383,6 +314,150 @@ def analyze(eid):
     second = sorted([s["score"] for i, s in out.items() if i != best[0]], reverse=True)
     gap = best[1]["score"] - (second[0] if second else best[1]["score"] - 99)
     return {"options": out, "suggest": best[0], "conf": "high" if gap >= 3 else "low"}
+
+
+def _note_monthly(blk, ctx, reasons, depth=0):
+    """持续月收益的顶上限提示（原 analyze 内闭包原样提取）。"""
+    if depth > 10 or blk is None or blk[0] != "blk":
+        return
+    for (t2, k2, o2, v2) in blk[3]:
+        if t2 != "kv" or v2 is None:
+            continue
+        if k2 == "add_monthly_resource_mult" and v2[0] == "blk":
+            res = None
+            for (t3, k3, o3, v3) in v2[3]:
+                if t3 == "kv" and k3 == "resource" and v3 and v3[0] in ("tok", "str"):
+                    res = v3[3]
+            if res and res in CAPS and ctx["resources"].get(res) is not None \
+                    and ctx["resources"][res] >= CAPS[res] - 2:
+                reasons.append("→ 持续 %s 收益（已顶上限，价值降低）" % res)
+        elif v2[0] == "blk":
+            _note_monthly(v2, ctx, reasons, depth + 1)
+
+
+def _find_top_rls(blk, depth=0, out=None):
+    """收集块内所有顶层 random_list 节点（不进入已发现的 RL 内部）。"""
+    if out is None:
+        out = []
+    if depth > 10 or blk is None or blk[0] != "blk":
+        return out
+    for (typ, k, op, v) in blk[3]:
+        if typ == "kv" and k == "random_list" and v and v[0] == "blk":
+            out.append(v)
+            continue
+        if v is not None and v[0] == "blk":
+            _find_top_rls(v, depth + 1, out)
+    return out
+
+
+def _parse_branches(rl):
+    """解析 random_list 分支 [(p, blk), ...]；概率键须为数字并归一化；失败返回 []。"""
+    br = []
+    for (typ, k, op, v) in rl[3]:
+        if typ != "kv" or not v or v[0] != "blk":
+            continue
+        try:
+            prob = float(str(k))
+        except Exception:
+            continue
+        if prob <= 0:
+            continue
+        br.append((prob, v))
+    tot = sum(prob for prob, _ in br)
+    if len(br) < 2 or tot <= 0:
+        return []
+    return [(prob / tot, b) for prob, b in br]
+
+
+def _score_plain(blk, ctx, seen, reasons, skip_rl=False):
+    """原版评分逐行等价迁移：键分类 + 资源 + modifier + 月收益提示。"""
+    bag = []
+    _walk_keys(blk, bag, skip_rl=skip_rl)
+    score = 0
+    for key in bag:
+        if key in seen:
+            continue
+        seen.add(key)
+        if key in POS4:
+            score += 4
+            reasons.append("+4 " + key)
+        elif key in POS3:
+            score += 3
+            reasons.append("+3 " + key)
+        elif key in UNCERTAIN:
+            score += 1
+            reasons.append("+1 " + key + "（方向未判定）")
+        elif key in POS2:
+            score += 2
+            reasons.append("+2 " + key)
+        elif key in POS1:
+            score += 1
+            reasons.append("+1 " + key)
+        elif key in NEG1:
+            score -= 1
+            reasons.append("-1 " + key)
+        elif key in NEG2:
+            score -= 2
+            reasons.append("-2 " + key)
+    pairs = []
+    _collect_resources(blk, pairs, skip_rl=skip_rl)
+    if pairs:
+        score = _resource_gain(pairs, ctx, reasons, score)
+    mods = []
+    _collect_mod_refs(blk, mods, skip_rl=skip_rl)
+    best_mod = {}
+    for (act, mname, mdays) in mods:
+        keym = (act, mname)
+        if keym not in best_mod or _mod_duration_factor(mdays) > _mod_duration_factor(best_mod[keym]):
+            best_mod[keym] = mdays
+    m_idx = _mod_index()
+    for (act, mname), mdays in best_mod.items():
+        if not mname:
+            score += 1 if act == "add_modifier" else -1
+            reasons.append("±1 %s（未命名，方向未判定）" % act)
+            continue
+        ent = m_idx.get(mname)
+        msc = ent.get("score") if isinstance(ent, dict) else None
+        if not msc:
+            score += 1 if act == "add_modifier" else -1
+            reasons.append("±1 %s %s（未收录/中性，方向未判定）" % (act, mname))
+            continue
+        msc_v = msc * _mod_duration_factor(mdays)
+        if act == "remove_modifier":
+            msc_v = -msc_v
+        score += msc_v
+        reasons.append("%+.1f %s %s" % (msc_v, act, mname))
+    _note_monthly(blk, ctx, reasons)
+    return score
+
+
+def _score_full(blk, ctx, seen, reasons, depth=0):
+    """RL-aware 评分：无 random_list 时与 _score_plain 完全等价；
+    含 random_list 时按分支概率计算期望值（替代旧版的正负分支求和）。"""
+    if depth > 8 or blk is None or blk[0] != "blk":
+        return 0.0
+    rls = _find_top_rls(blk)
+    if not rls:
+        return _score_plain(blk, ctx, seen, reasons)
+    score = _score_plain(blk, ctx, seen, reasons, skip_rl=True)
+    for rl in rls:
+        brs = _parse_branches(rl)
+        if not brs:
+            gone = _score_plain(rl, ctx, seen, reasons)
+            score += gone
+            reasons.append("[RL?] 随机分支格式未识别，按普通内容计入 %+.1f" % gone)
+            continue
+        exp = 0.0
+        seg = []
+        for prob, b in brs:
+            sub_seen = set()
+            sub_reasons = []
+            bs = _score_full(b, ctx, sub_seen, sub_reasons, depth + 1)
+            exp += prob * bs
+            seg.append("%d%%→%+.1f" % (round(prob * 100), bs))
+        score += exp
+        reasons.append("[RL修正] 随机分支期望 %+.1f（%s）" % (exp, " ".join(seg)))
+    return score
 
 
 def main():

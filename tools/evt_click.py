@@ -70,6 +70,7 @@ def get_window_instance(h, base, name="EventWindow"):
     k32.WriteProcessMemory(h, ctypes.c_void_p(mem), bytes(blob), 0x400, None)
     thr = k32.CreateRemoteThread(h, None, 0, ctypes.c_void_p(stub_addr), None, 0, None)
     k32.WaitForSingleObject(ctypes.c_void_p(thr), 8000)
+    k32.CloseHandle(ctypes.c_void_p(thr))
     P = ce.read_u64(h, scratch)
     k32.VirtualFreeEx(h, ctypes.c_void_p(mem), 0, 0x8000)
     return P
@@ -206,6 +207,7 @@ def build_cmd(h, base, win, n):
         print("CreateRemoteThread 失败")
         return None, mem
     k32.WaitForSingleObject(ctypes.c_void_p(thr), 8000)
+    k32.CloseHandle(ctypes.c_void_p(thr))
     raw = ce.rpm(h, scratch, 0x60)
     return raw, mem
 
