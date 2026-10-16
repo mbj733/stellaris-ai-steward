@@ -97,4 +97,4 @@ yourself from your own game installation — see `data/README.md`.
 
 ## License
 
-MIT (see `LICENSE`). This repository contains no Paradox Interactive copyrighted content.
+PolyForm Noncommercial 1.0.0 (see `LICENSE`) — free for noncommercial use; **commercial use is not licensed**. This repository contains no Paradox Interactive copyrighted content.

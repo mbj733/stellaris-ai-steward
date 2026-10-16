@@ -97,4 +97,4 @@ python tools\hook_rw88.py read    # 内存钩子状态（武装表 / 改写数 /
 
 ## License
 
-MIT（见 `LICENSE`）。本仓库不含任何 Paradox Interactive 版权内容。
+PolyForm Noncommercial 1.0.0（见 `LICENSE`）——个人非商业使用免费；**商业用途不在授权范围，需另行获得许可**。本仓库不含任何 Paradox Interactive 版权内容。
