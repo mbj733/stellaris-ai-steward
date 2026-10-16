@@ -55,6 +55,10 @@ AWAY_GRACE = 90         # 秒：离开模式下，检测到暂停后等待多久
 AWAY_RESUME_OFF = 6     # 秒：离开模式(托管OFF)下，空闲暂停超此时长且无待决事件 → 自动恢复运行
                         # （15→6：空闲模组约每 40-50 秒暂停一次，缩短阈值把运行占比从 ~40% 提到 ~85%；
                         #  仍高于 R1 单步注入暂停时长，两者互不干扰）
+WIN_CLEAN_INTERVAL = 45  # 秒：离开模式下外交/通知窗口自动清理间隔（2026-10-17 新增 R8）
+WIN_TARGETS = [
+    "incoming_diplomacy_view_action_war_peace",  # 宣战/和平"收件"窗口（实测被宣战后该窗滞留屏幕）
+]
 
 
 def now():
@@ -141,6 +145,8 @@ class Brain:
             pass
         self._last_rw_log = None
         self.last_r6 = 0.0
+        self.last_win_clean = 0.0
+        self._win_enabled_logged = False
         self.cnt_ladder = 0     # 本进程：天梯成功数
         self.cnt_single = 0     # 本进程：单选项成功数
         self.cnt_fail = 0       # 本进程：失败数
@@ -840,6 +846,27 @@ class Brain:
         else:
             self.away2_since = None
 
+    # ---------- R8: 离开模式窗口清理（外交收件类弹窗自动关闭） ----------
+    def rule_windows(self):
+        """离开模式下，周期性关闭"提醒/通知型"外交收件窗口（如宣战窗），
+        避免挂机时无人确认的弹窗长期滞留屏幕。
+        通道：游戏官方控制台命令 window close <gui name>（no-op 安全，多次实测无副作用）。"""
+        if time.time() - self.last_win_clean < WIN_CLEAN_INTERVAL:
+            return
+        self.last_win_clean = time.time()
+        if not AWAY_FILE.exists():
+            return
+        if not self._win_enabled_logged:
+            self._win_enabled_logged = True
+            log("[R8] 离开模式：外交窗口自动清理已启用（目标：宣战/和平收件窗）")
+        for name in WIN_TARGETS:
+            try:
+                r = ce.execute_command(self.h, self.base, f"window close {name}")
+                if r.get("ok"):
+                    log(f"[R8] 已自动关闭窗口「{name}」")
+            except Exception as ex:
+                log(f"[R8] 窗口清理异常：{ex}")
+
     def run(self):
         log("=== 决策大脑 v1.3 启动（观察 + 探测天梯 + 按名武装改写[24槽/归属校验] + 决策日志） ===")
         while True:
@@ -861,6 +888,7 @@ class Brain:
                 self.rule_events(hai)
                 self.rule_audit(hai)
                 self.rule_away(hai, paused)
+                self.rule_windows()
                 self.rule_resources()
                 self.rule_tasks()
                 self.rule_health(hai)
