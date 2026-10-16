@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+logs/
+shots/
+save_backup/
+mod_build_output/
+_hook_state*.json
+_brain_*.json
+_away_mode.flag
+_hai_ui*.json
+_hai_ui_closed.flag
+data/*.json
+!data/README.md
+tools/_ghidra_*.log

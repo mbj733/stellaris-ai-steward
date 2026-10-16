@@ -1,0 +1,4 @@
+psutil>=5.9
+numpy>=1.24
+keyboard>=0.13.5
+capstone>=5.0
