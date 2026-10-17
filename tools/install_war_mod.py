@@ -21,7 +21,7 @@ LAUNCHER_DB = DOC / "launcher-v2.sqlite"
 
 DESC = (
     'name="AI Steward: War Component"\n'
-    'version="0.3.0"\n'
+    'version="0.4.0"\n'
     "tags={\n"
     '\t"Gameplay"\n'
     "}\n"
@@ -264,6 +264,11 @@ def update_launcher_db(add=True, mod_dir=MOD):
         if add:
             if row:
                 mid = row[0]
+                con.execute(
+                    "UPDATE mods SET displayName=?, version=?, dirPath=?, "
+                    "status='ready_to_play', timeUpdated=? WHERE id=?",
+                    ("AI Steward: War Component", "0.4.0", str(mod_dir),
+                     int(time.time()), mid))
             else:
                 mid = str(uuid.uuid4())
                 con.execute(
@@ -271,7 +276,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                     "requiredVersion, dirPath, status, source, timeUpdated, "
                     "isMetadataApplied, metadataStatus, keepLatest) "
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (mid, ENTRY, "AI Steward: War Component", "0.3.0",
+                    (mid, ENTRY, "AI Steward: War Component", "0.4.0",
                      '["Gameplay"]', "4.5.*", str(mod_dir),
                      "ready_to_play", "local", int(time.time()), 0, "not_applied", 1))
             exists = con.execute("SELECT 1 FROM playsets_mods WHERE playsetId=? AND modId=?",
