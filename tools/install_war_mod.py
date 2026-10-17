@@ -78,12 +78,14 @@ country_event = {
 \t\tevery_system = {
 \t\t\tlimit = {
 \t\t\t\tany_fleet_in_system = {
+\t\t\t\t\texists = owner
 \t\t\t\t\towner = { is_hostile = root }
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t}
 \t\t\t}
 \t\t\trandom_fleet_in_system = {
 \t\t\t\tlimit = {
+\t\t\t\t\texists = owner
 \t\t\t\t\towner = { is_hostile = root }
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t}
@@ -91,6 +93,7 @@ country_event = {
 \t\t\t}
 \t\t\tevery_fleet_in_system = {
 \t\t\t\tlimit = {
+\t\t\t\t\texists = owner
 \t\t\t\t\towner = { is_same_value = root }
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t\tNOT = { is_in_combat = yes }
@@ -135,6 +138,7 @@ country_event = {
 \t\t\t\t\t\texists = space_owner
 \t\t\t\t\t\tspace_owner = { is_same_value = root }
 \t\t\t\t\t\tany_fleet_in_system = {
+\t\t\t\t\t\t\texists = owner
 \t\t\t\t\t\t\towner = { is_hostile = root }
 \t\t\t\t\t\t}
 \t\t\t\t\t}
