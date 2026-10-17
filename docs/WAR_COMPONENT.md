@@ -43,6 +43,11 @@ python tools\check_war_mod.py      # 只看机动军用舰队（排除恒星基�
 
 也可以直接双击项目根目录的 `check_war.bat`（重启游戏后运行）。
 
+诊断事件（手动触发，会真的移动舰队）：
+```
+event ai_steward_war.99    # 全部军用舰队回到首都星系（验证移动链路）
+```
+
 `error.log` 路径：`Documents\Paradox Interactive\Stellaris\logs\error.log`。
 
 ## 边界（如实说明）
