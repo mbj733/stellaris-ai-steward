@@ -66,5 +66,8 @@ event ai_steward_war.99    # 全部军用舰队回到首都星系（验证移动
   `move_to effect ... accepts only yes or no as values`（events 文件 line 85/103）。
 - 已改为舰队动作队列语法 `queue_actions = { move_to = event_target:... }`；
   第二实例 `error.log` 无任何 `ai_steward_war` 错误。
-- 仍待验证：真实存档中月度事件的实际执行效果（姿态/移动/追击）——等正式重启后由
-  `war_mode.py verify` 确认。
+- **真实存档第一次重启（17:03-17:04）**：mod 成功加载，6/6 机动军用舰队 stance 变为
+  `aggressive`（事件 1 生效）。但事件 2 的 `closest_system` 防御分支每星系报
+  `Invalid context switch [owner] from ... [galactic_object]`（line 101，600 条）——
+  `owner` 不能从 galactic_object 直接切；已改为 `space_owner`（vanilla an4_events 同款用法）。
+- 仍需**再重启一次**加载 `space_owner` 修复版，然后由 `war_mode.py verify` 确认防御/移动分支。

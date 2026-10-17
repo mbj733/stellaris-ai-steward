@@ -115,7 +115,7 @@ country_event = {
 \t\t\t\t}
 \t\t\t\tclosest_system = {
 \t\t\t\t\tlimit = {
-\t\t\t\t\t\towner = { is_hostile = root }
+\t\t\t\t\t\tspace_owner = { is_hostile = root }
 \t\t\t\t\t}
 \t\t\t\t\tsave_event_target_as = ai_steward_target_system
 \t\t\t\t\tprev = {
@@ -134,7 +134,7 @@ country_event = {
 \t\t\t\t}
 \t\t\t\tclosest_system = {
 \t\t\t\t\tlimit = {
-\t\t\t\t\t\towner = { is_same_value = root }
+\t\t\t\t\t\tspace_owner = { is_same_value = root }
 \t\t\t\t\t\tany_fleet_in_system = {
 \t\t\t\t\t\t\towner = { is_hostile = root }
 \t\t\t\t\t\t}
