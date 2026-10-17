@@ -21,7 +21,7 @@ LAUNCHER_DB = DOC / "launcher-v2.sqlite"
 
 DESC = (
     'name="AI Steward: War Component"\n'
-    'version="0.6.0"\n'
+    'version="0.7.2"\n'
     "tags={\n"
     '\t"Gameplay"\n'
     "}\n"
@@ -59,7 +59,6 @@ country_event = {
 \t\t\t\t\t\tfleet_power < 5000
 \t\t\t\t\t\tNOT = { is_in_combat = yes }
 \t\t\t\t\t}
-\t\t\t\t\tset_fleet_stance = evasive
 \t\t\t\t\tset_fleet_flag = ai_steward_weak
 \t\t\t\t}
 \t\t\t\telse = {
@@ -363,6 +362,45 @@ country_event = {
 \t}
 }
 
+# 强制改善附属协议（战略引擎在实力达到阈值后触发）：
+# 允许带贡赋扩张、只参加宗主防御战、恢复独立投票权
+country_event = {
+\tid = ai_steward_war.25
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tevery_agreement = {
+\t\t\tlimit = {
+\t\t\t\tagreement_preset = preset_vassal_oppressive_ai
+\t\t\t}
+\t\t\tset_rule_can_subject_expand = can_expand_with_tithe
+\t\t\tset_rule_join_overlord_wars = defensive
+\t\t\tset_rule_can_subject_vote = yes
+\t\t\tset_rule_can_subject_do_diplomacy = yes
+\t\t}
+\t}
+}
+
+# 消费品缺口：把人口最多的非首都殖民地设为工厂世界（AI 会按定位补工厂区）
+country_event = {
+\tid = ai_steward_war.26
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tordered_owned_colony = {
+\t\t\tlimit = {
+\t\t\t\tis_capital = no
+\t\t\t\tNOT = { has_designation = col_factory }
+\t\t\t}
+\t\t\tposition = 0
+\t\t\torder_by = trigger:planet_size
+\t\t\tset_colony_type = col_factory
+\t\t}
+\t}
+}
+
 # 诊断：把全部军用舰队移动回首都星系（仅手动触发，用于验证移动链路）
 country_event = {
 \tid = ai_steward_war.99
@@ -386,6 +424,15 @@ country_event = {
 \t}
 }
 """
+
+# 把策略配置里的弱舰队阈值写入 mod（默认 5000；改配置后重装+重启生效）
+_DYN = Path(__file__).resolve().parent.parent / "policy" / "strategy_dynamic.json"
+try:
+    _WEAK = int(float(json.loads(_DYN.read_text(encoding="utf-8")).get("weak_fleet_power", 5000)))
+except Exception:
+    _WEAK = 5000
+EVENT = EVENT.replace("fleet_power < 5000", "fleet_power < %d" % _WEAK)
+EVENT = EVENT.replace("fleet_power >= 5000", "fleet_power >= %d" % _WEAK)
 
 LOC_ZH = 'l_simp_chinese:\n ai_steward_war_name:0 "AI 托管·战争组件"\n'
 LOC_EN = 'l_english:\n ai_steward_war_name:0 "AI Steward: War Component"\n'
@@ -429,7 +476,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                 con.execute(
                     "UPDATE mods SET displayName=?, version=?, dirPath=?, "
                     "status='ready_to_play', timeUpdated=? WHERE id=?",
-                    ("AI Steward: War Component", "0.6.0", str(mod_dir),
+                    ("AI Steward: War Component", "0.7.2", str(mod_dir),
                      int(time.time()), mid))
             else:
                 mid = str(uuid.uuid4())
@@ -438,7 +485,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                     "requiredVersion, dirPath, status, source, timeUpdated, "
                     "isMetadataApplied, metadataStatus, keepLatest) "
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (mid, ENTRY, "AI Steward: War Component", "0.6.0",
+                    (mid, ENTRY, "AI Steward: War Component", "0.7.2",
                      '["Gameplay"]', "4.5.*", str(mod_dir),
                      "ready_to_play", "local", int(time.time()), 0, "not_applied", 1))
             exists = con.execute("SELECT 1 FROM playsets_mods WHERE playsetId=? AND modId=?",

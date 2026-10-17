@@ -1,0 +1,12 @@
+{
+  "_note": "战略阈值。比值类会随帝国增长自动生效；weak_fleet_power 在安装 mod 时写入（改后需重装+重启）。",
+  "conserve_ratio": 0.5,
+  "renegotiate_ratio": 0.6,
+  "independence_ratio": 0.9,
+  "cg_safe_ratio": 0.15,
+  "military_econ_cg_ratio": 0.25,
+  "weak_fleet_power": 5000,
+  "auto_renegotiate": false,
+  "auto_build_cg": false,
+  "auto_independence": false
+}

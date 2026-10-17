@@ -40,6 +40,10 @@ def snapshot():
     sa.leaves_sum(b.get("expenses") or {}, exp)
     cg = inc["consumer_goods"] - exp["consumer_goods"]
     alloy = inc["alloys"] - exp["alloys"]
+    dyn = sa.load_json(ROOT / "policy" / "strategy_dynamic.json", {})
+    cg_income = max(1.0, inc["consumer_goods"])
+    cg_safe = max(100.0, cg_income * float(dyn.get("cg_safe_ratio", 0.15)))
+    mil_thr = cg_income * float(dyn.get("military_econ_cg_ratio", 0.25))
     own_wars = 0
     for _wid, w in (gs.get("war") or {}).items():
         if not isinstance(w, dict):
@@ -52,11 +56,11 @@ def snapshot():
     # balanced -> military only at war with a large CG surplus.
     cur_mode = load_state().get("mode")
     if cur_mode == "military":
-        mode = "military" if cg >= 200 else "balanced"
+        mode = "military" if cg >= cg_safe else "balanced"
     elif cur_mode == "civilian":
-        mode = "civilian" if cg <= 200 else "balanced"
+        mode = "civilian" if cg <= cg_safe else "balanced"
     else:
-        if own_wars and cg > 300:
+        if own_wars and cg > mil_thr:
             mode = "military"
         elif cg < 0:
             mode = "civilian"
@@ -65,16 +69,36 @@ def snapshot():
     ov = c0.get("overlord")
     ov_mil = mine = 0.0
     loyalty = sa.f(c0.get("loyalty"))
+    ov_ex = 0.0
     conserve = False
     if ov and str(ov) not in ("", "none", "4294967295"):
         ovc = (gs.get("country") or {}).get(str(ov)) or {}
         ov_mil = sa.f(ovc.get("military_power"))
         mine = sa.f(c0.get("military_power"))
-        conserve = bool(loyalty < -50 and ov_mil and mine < ov_mil * 0.5)
+        conserve = bool(loyalty < -50 and ov_mil
+                        and mine < ov_mil * float(dyn.get("conserve_ratio", 0.5)))
+        for w in (gs.get("war") or {}).values():
+            if not isinstance(w, dict):
+                continue
+            A, D = sa.side_ids(w, "attackers"), sa.side_ids(w, "defenders")
+            if str(ov) in A:
+                ov_ex = max(ov_ex, sa.f(w.get("attacker_war_exhaustion")))
+            elif str(ov) in D:
+                ov_ex = max(ov_ex, sa.f(w.get("defender_war_exhaustion")))
+    ratio = (mine / ov_mil) if ov_mil else 0.0
+    ren_ratio = float(dyn.get("renegotiate_ratio", 0.6))
+    ind_ratio = float(dyn.get("independence_ratio", 0.9))
+    renegotiate_ready = ratio >= ren_ratio or (ov_ex >= 20 and ratio >= 0.25)
+    independence_ready = ratio >= ind_ratio or (ov_ex >= 50 and ratio >= 0.5)
     return {"save": Path(sv).name, "date": gs.get("date"), "own_wars": own_wars,
             "cg": cg, "alloy": alloy, "mode": mode,
+            "cg_safe": cg_safe, "mil_thr": mil_thr,
             "overlord": str(ov) if ov else None, "ov_mil": ov_mil,
-            "our_mil": mine, "loyalty": loyalty, "conserve": conserve}
+            "our_mil": mine, "loyalty": loyalty, "conserve": conserve,
+            "ratio": ratio, "overlord_exhaustion": ov_ex,
+            "renegotiate_ratio": ren_ratio, "independence_ratio": ind_ratio,
+            "renegotiate_ready": renegotiate_ready,
+            "independence_ready": independence_ready}
 
 
 def load_state():
@@ -87,13 +111,18 @@ def load_state():
 def show(s):
     st = load_state()
     print("save:", s["save"], "| date:", s["date"], "| wars:", s["own_wars"])
-    print("consumer_goods net=%+.1f | alloys net=%+.1f" % (s["cg"], s["alloy"]))
+    print("consumer_goods net=%+.1f (safe %.0f / military %.0f) | alloys net=%+.1f"
+          % (s["cg"], s["cg_safe"], s["mil_thr"], s["alloy"]))
     print("recommended:", s["mode"], "| last applied:", st.get("mode", "?"),
           "| auto:", "ON" if AUTO.exists() else "OFF")
     if s.get("overlord"):
         print("overlord=%s | ours=%.0f / overlord=%.0f | loyalty=%.0f | conserve=%s"
               % (s["overlord"], s["our_mil"], s["ov_mil"], s["loyalty"],
                  "ON" if s["conserve"] else "OFF"))
+        print("ratio=%.3f | overlord_exhaustion=%.1f | renegotiate_ready=%s | independence_ready=%s"
+              % (s["ratio"], s["overlord_exhaustion"],
+                 "YES" if s["renegotiate_ready"] else "no",
+                 "YES" if s["independence_ready"] else "no"))
 
 
 def apply():
@@ -161,6 +190,60 @@ def research(area="physics", yes=False):
     print("research_technology %s -> ok=%s message=%r" % (top, r.get("ok"), r.get("message")))
 
 
+def independence(yes=False):
+    s = snapshot()
+    show(s)
+    if not s.get("overlord"):
+        print("no overlord")
+        return
+    if not s["independence_ready"] and "--force" not in sys.argv:
+        print("not ready (ratio %.3f < %.2f); use --force only if you accept the risk"
+              % (s["ratio"], s["independence_ratio"]))
+        return
+    cmd = "war 0 %s wg_independence" % s["overlord"]
+    print("declare independence:", cmd)
+    if not yes:
+        print("dry-run; add --yes to execute")
+        return
+    import console_exec as ce
+    h, pid, base = ce.open_game()
+    r = ce.execute_command(h, base, cmd)
+    print("war -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+
+
+def renegotiate(yes=False):
+    s = snapshot()
+    show(s)
+    if not s["renegotiate_ready"] and "--force" not in sys.argv:
+        print("not ready (ratio %.3f < %.2f); use --force only if you accept the risk"
+              % (s["ratio"], s["renegotiate_ratio"]))
+        return
+    print("improve agreement: expand_with_tithe / join overlord wars defensive / vote yes")
+    if not yes:
+        print("dry-run; add --yes to execute")
+        return
+    import console_exec as ce
+    h, pid, base = ce.open_game()
+    r = ce.execute_command(h, base, "event ai_steward_war.25")
+    print("event ai_steward_war.25 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+
+
+def build_cg(yes=False):
+    s = snapshot()
+    show(s)
+    if s["cg"] >= 0:
+        print("consumer goods net is non-negative; no factory-world change needed")
+        return
+    print("set the largest non-capital colony to factory world (col_factory)")
+    if not yes:
+        print("dry-run; add --yes to execute")
+        return
+    import console_exec as ce
+    h, pid, base = ce.open_game()
+    r = ce.execute_command(h, base, "event ai_steward_war.26")
+    print("event ai_steward_war.26 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "status"
     if mode == "status":
@@ -177,6 +260,12 @@ def main():
     elif mode == "research":
         area = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else "physics"
         research(area, "--yes" in sys.argv)
+    elif mode == "independence":
+        independence("--yes" in sys.argv)
+    elif mode == "renegotiate":
+        renegotiate("--yes" in sys.argv)
+    elif mode == "build-cg":
+        build_cg("--yes" in sys.argv)
     else:
         print(__doc__)
 
