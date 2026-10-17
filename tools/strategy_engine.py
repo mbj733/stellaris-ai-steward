@@ -277,6 +277,19 @@ def add_cg_districts(yes=False):
     print("event ai_steward_war.27 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
 
 
+def survey_all(yes=False):
+    s = snapshot()
+    show(s)
+    print("mark every unsurveyed system as surveyed (exploration takeover; cheat-level)")
+    if not yes:
+        print("dry-run; add --yes to execute")
+        return
+    import console_exec as ce
+    h, pid, base = ce.open_game()
+    r = ce.execute_command(h, base, "event ai_steward_war.28")
+    print("event ai_steward_war.28 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "status"
     if mode == "status":
@@ -301,6 +314,8 @@ def main():
         build_cg("--yes" in sys.argv)
     elif mode == "add-cg-districts":
         add_cg_districts("--yes" in sys.argv)
+    elif mode == "survey-all":
+        survey_all("--yes" in sys.argv)
     else:
         print(__doc__)
 
