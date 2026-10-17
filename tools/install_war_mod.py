@@ -5,16 +5,19 @@
 用法: python tools/install_war_mod.py install|remove
 """
 import json
+import sqlite3
 import sys
 import time
+import uuid
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-DOC = Path(r"C:\Users\Administrator\Documents\Paradox Interactive\Stellaris")
+DOC = Path.home() / "Documents" / "Paradox Interactive" / "Stellaris"
 MODDIR = DOC / "mod"
 MOD = MODDIR / "ai_steward_war"
 ENTRY = "mod/ai_steward_war.mod"
+LAUNCHER_DB = DOC / "launcher-v2.sqlite"
 
 DESC = (
     'name="AI Steward: War Component"\n'
@@ -213,6 +216,58 @@ def update_dlc(add=True):
     return dlc.read_text(encoding="utf-8")
 
 
+def update_launcher_db(add=True, mod_dir=MOD):
+    """Keep the Paradox Launcher playset in sync (otherwise it can rewrite dlc_load)."""
+    if not LAUNCHER_DB.exists():
+        print("launcher db not found - skip playset sync")
+        return
+    bak = LAUNCHER_DB.with_name(LAUNCHER_DB.name + ".bak-war-" + time.strftime("%Y%m%d%H%M%S"))
+    bak.write_bytes(LAUNCHER_DB.read_bytes())
+    con = sqlite3.connect(str(LAUNCHER_DB))
+    try:
+        ps = con.execute("SELECT id FROM playsets WHERE isActive=1 AND isRemoved=0 "
+                         "ORDER BY updatedOn DESC LIMIT 1").fetchone()
+        if not ps:
+            print("launcher: no active playset - skip")
+            return
+        psid = ps[0]
+        row = con.execute("SELECT id FROM mods WHERE gameRegistryId=? LIMIT 1",
+                          (ENTRY,)).fetchone()
+        if add:
+            if row:
+                mid = row[0]
+            else:
+                mid = str(uuid.uuid4())
+                con.execute(
+                    "INSERT INTO mods (id, gameRegistryId, displayName, version, tags, "
+                    "requiredVersion, dirPath, status, source, timeUpdated, "
+                    "isMetadataApplied, metadataStatus, keepLatest) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (mid, ENTRY, "AI Steward: War Component", "0.3.0",
+                     '["Gameplay"]', "4.5.*", str(mod_dir),
+                     "ready_to_play", "local", int(time.time()), 0, "not_applied", 1))
+            exists = con.execute("SELECT 1 FROM playsets_mods WHERE playsetId=? AND modId=?",
+                                 (psid, mid)).fetchone()
+            if not exists:
+                pos = con.execute("SELECT COALESCE(MAX(position),-1)+1 FROM playsets_mods "
+                                  "WHERE playsetId=?", (psid,)).fetchone()[0]
+                con.execute("INSERT INTO playsets_mods (playsetId, modId, enabled, position) "
+                            "VALUES (?,?,?,?)", (psid, mid, 1, pos))
+            con.execute("UPDATE playsets SET updatedOn=?, hasNotApprovedChanges=0 WHERE id=?",
+                        (int(time.time() * 1000), psid))
+        else:
+            if row:
+                mid = row[0]
+                con.execute("DELETE FROM playsets_mods WHERE modId=?", (mid,))
+                con.execute("DELETE FROM mods WHERE id=?", (mid,))
+                con.execute("UPDATE playsets SET updatedOn=?, hasNotApprovedChanges=0 WHERE id=?",
+                            (int(time.time() * 1000), psid))
+        con.commit()
+        print("launcher playset synced:", "add" if add else "remove", psid)
+    finally:
+        con.close()
+
+
 def install():
     (MOD / "common" / "on_actions").mkdir(parents=True, exist_ok=True)
     (MOD / "events").mkdir(parents=True, exist_ok=True)
@@ -228,6 +283,7 @@ def install():
         LOC_EN, encoding="utf-8-sig")
     print("mod files written:", MOD)
     print("dlc_load now:", update_dlc(True))
+    update_launcher_db(True)
 
 
 def remove():
@@ -239,6 +295,7 @@ def remove():
         p.unlink()
     print("mod removed")
     print("dlc_load now:", update_dlc(False))
+    update_launcher_db(False)
 
 
 if __name__ == "__main__":
