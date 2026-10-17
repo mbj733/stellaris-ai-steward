@@ -70,4 +70,9 @@ event ai_steward_war.99    # 全部军用舰队回到首都星系（验证移动
   `aggressive`（事件 1 生效）。但事件 2 的 `closest_system` 防御分支每星系报
   `Invalid context switch [owner] from ... [galactic_object]`（line 101，600 条）——
   `owner` 不能从 galactic_object 直接切；已改为 `space_owner`（vanilla an4_events 同款用法）。
-- 仍需**再重启一次**加载 `space_owner` 修复版，然后由 `war_mode.py verify` 确认防御/移动分支。
+- 同一次运行还发现：同星系追击分支在 fleet trigger 里用 `solar_system = { ... }` 报
+  `Invalid context switch [solar_system] from ... [fleet]`（line 49）。已改为**星系级扫描**：
+  `every_system` → 有敌方军用舰队 → `every_fleet_in_system`（我方军用舰队）→ `auto_follow_fleet`。
+  这样不再需要 fleet→system 的 trigger 作用域切换。
+- 仍需**再重启一次**加载这两处修复（`space_owner` + `every_system`），然后由
+  `war_mode.py verify` 确认防御/追击/移动分支。

@@ -74,29 +74,26 @@ country_event = {
 \t}
 
 \timmediate = {
-\t\t# 1) 已与敌舰队同星系：直接自动追击并攻击
-\t\tevery_owned_fleet = {
+\t\t# 1) 同星系接敌：扫描星系；有敌方军用舰队时，命令该星系内我方军用舰队追击
+\t\tevery_system = {
 \t\t\tlimit = {
-\t\t\t\tis_ship_class = shipclass_military
-\t\t\t\tNOT = { is_in_combat = yes }
-\t\t\t}
-\t\t\tif = {
-\t\t\t\tlimit = {
-\t\t\t\t\tsolar_system = {
-\t\t\t\t\t\tany_fleet_in_system = {
-\t\t\t\t\t\t\towner = { is_hostile = root }
-\t\t\t\t\t\t\tis_ship_class = shipclass_military
-\t\t\t\t\t\t}
-\t\t\t\t\t}
+\t\t\t\tany_fleet_in_system = {
+\t\t\t\t\towner = { is_hostile = root }
+\t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t}
-\t\t\t\tsolar_system = {
-\t\t\t\t\trandom_fleet_in_system = {
-\t\t\t\t\t\tlimit = {
-\t\t\t\t\t\t\towner = { is_hostile = root }
-\t\t\t\t\t\t\tis_ship_class = shipclass_military
-\t\t\t\t\t\t}
-\t\t\t\t\t\tsave_event_target_as = ai_steward_enemy_fleet
-\t\t\t\t\t}
+\t\t\t}
+\t\t\trandom_fleet_in_system = {
+\t\t\t\tlimit = {
+\t\t\t\t\towner = { is_hostile = root }
+\t\t\t\t\tis_ship_class = shipclass_military
+\t\t\t\t}
+\t\t\t\tsave_event_target_as = ai_steward_enemy_fleet
+\t\t\t}
+\t\t\tevery_fleet_in_system = {
+\t\t\t\tlimit = {
+\t\t\t\t\towner = { is_same_value = root }
+\t\t\t\t\tis_ship_class = shipclass_military
+\t\t\t\t\tNOT = { is_in_combat = yes }
 \t\t\t\t}
 \t\t\t\tauto_follow_fleet = {
 \t\t\t\t\ttarget = event_target:ai_steward_enemy_fleet
