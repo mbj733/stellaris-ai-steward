@@ -28,6 +28,7 @@ import console_exec as ce  # noqa: E402
 
 POS_FILE = Path(__file__).resolve().parent / "_hai_ui_pos.json"
 AWAY_FILE = Path(__file__).resolve().parent / "_away_mode.flag"
+WAR_FILE = Path(__file__).resolve().parent / "_war_offensive.flag"
 CLOSED_FLAG = Path(__file__).resolve().parent / "_hai_ui_closed.flag"
 
 GOLD = "#c9a75f"
@@ -49,6 +50,13 @@ TEXTS = {
         "btn": "切换　开 / 关",
         "away_on": "离开模式：开 ●",
         "away_off": "离开模式：关",
+        "war_on": "战争模式：进攻 ●（F9）",
+        "war_off": "战争模式：防御（F9）",
+        "war_need_mod": "战争组件未安装（tools\\install_war_mod.py）",
+        "war_need_restart": "战争组件未加载（需重启游戏）",
+        "war_on_msg": "战争模式：进攻",
+        "war_off_msg": "战争模式：防御",
+        "war_fail": "战争切换失败: ",
         "hotkey": "F8 全局热键",
         "hotkey_na": "F8 热键不可用（用按钮）",
         "waiting": "等待游戏…",
@@ -74,6 +82,13 @@ TEXTS = {
         "btn": "Toggle  ON / OFF",
         "away_on": "Away mode: ON ●",
         "away_off": "Away mode: OFF",
+        "war_on": "War mode: ATTACK ● (F9)",
+        "war_off": "War mode: DEFEND (F9)",
+        "war_need_mod": "War component not installed (tools\\install_war_mod.py)",
+        "war_need_restart": "War component not loaded (restart the game)",
+        "war_on_msg": "War mode: attack",
+        "war_off_msg": "War mode: defend",
+        "war_fail": "War toggle failed: ",
         "hotkey": "F8 global hotkey",
         "hotkey_na": "F8 unavailable (use button)",
         "waiting": "Waiting for game...",
@@ -112,6 +127,7 @@ class App:
         self.h = None
         self.base = None
         self.pending = False
+        self.pending_war = False
         self.last_err = ""
         self.gone_since = None
         self.drag = (0, 0)
@@ -185,6 +201,14 @@ class App:
             highlightthickness=1, highlightbackground="#3a4757", highlightcolor="#3a4757")
         self.away_btn.pack(padx=14, pady=(0, 2), fill="x")
 
+        self.war_btn = tk.Button(
+            wrap, text=self.t("war_off"), command=self.toggle_war,
+            font=("Microsoft YaHei UI", 9), bg=BG, fg=FG_DIM,
+            activebackground="#1d2c46", activeforeground=FG,
+            relief="flat", bd=0, padx=8, pady=3,
+            highlightthickness=1, highlightbackground="#3a4757", highlightcolor="#3a4757")
+        self.war_btn.pack(padx=14, pady=(0, 2), fill="x")
+
         self.info_lbl = tk.Label(wrap, text=self.t("hotkey"), font=("Microsoft YaHei UI", 8),
                                  fg="#6d7686", bg=BG)
         self.info_lbl.pack(padx=16, pady=(0, 8))
@@ -201,6 +225,7 @@ class App:
         try:
             import keyboard
             keyboard.add_hotkey("f8", self._hotkey)
+            keyboard.add_hotkey("f9", self._war_hotkey)
             self.kb = True
         except Exception:
             self.kb = False
@@ -237,6 +262,8 @@ class App:
             self.btn.config(text=self.t("btn"))
             self.info_lbl.config(text=self.t("hotkey") if getattr(self, "kb", False) else self.t("hotkey_na"))
             self.away_btn.config(text=(self.t("away_on") if AWAY_FILE.exists() else self.t("away_off")))
+            self.war_btn.config(text=(self.t("war_on") if WAR_FILE.exists() else self.t("war_off")),
+                                fg=(FG_ON if WAR_FILE.exists() else FG_DIM))
             self.eng_lbl.config(text=self.t("eng_dash"))
             self.state_lbl.config(text=self.t("checking"))
         except Exception:
@@ -276,6 +303,9 @@ class App:
             return
         self.pending = True
 
+    def _war_hotkey(self):
+        self.pending_war = True
+
     def request_toggle(self):
         if time.time() - self.last_toggle < 2.5:
             return
@@ -287,6 +317,41 @@ class App:
                 AWAY_FILE.unlink()
             else:
                 AWAY_FILE.touch()
+        except Exception:
+            pass
+
+    def toggle_war(self):
+        """切换战争组件的进攻模式（需已安装 ai_steward_war 并重启游戏）。"""
+        try:
+            import war_mode
+            if not war_mode.mod_enabled():
+                self.info_lbl.config(text=self.t("war_need_mod"))
+                return
+        except Exception:
+            pass
+        if self.h is None:
+            self._ensure_open()
+        if self.h is None:
+            return
+        want_on = not WAR_FILE.exists()
+        ev = "ai_steward_war.10" if want_on else "ai_steward_war.11"
+        try:
+            r = ce.execute_command(self.h, self.base, "event " + ev)
+            msg = str(r.get("message") or "").lower()
+            bad = any(w in msg for w in ("not found", "invalid", "unknown", "no event"))
+            if r.get("ok") and not bad:
+                if want_on:
+                    WAR_FILE.touch()
+                elif WAR_FILE.exists():
+                    WAR_FILE.unlink()
+                self.info_lbl.config(text=self.t("war_on_msg") if want_on else self.t("war_off_msg"))
+            else:
+                self.info_lbl.config(text=self.t("war_need_restart"))
+        except Exception as e:
+            self.info_lbl.config(text=(self.t("war_fail") + str(e))[:60])
+        try:
+            self.war_btn.config(text=(self.t("war_on") if WAR_FILE.exists() else self.t("war_off")),
+                                fg=(FG_ON if WAR_FILE.exists() else FG_DIM))
         except Exception:
             pass
 
@@ -398,6 +463,10 @@ class App:
             if flag is None:
                 self._drop()
                 return
+
+        if self.pending_war:
+            self.pending_war = False
+            self.toggle_war()
 
         if flag == 1:
             self.state_lbl.config(text=self.t("state_on"), fg=FG_ON)
