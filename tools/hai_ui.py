@@ -52,6 +52,11 @@ TEXTS = {
         "away_off": "离开模式：关",
         "war_on": "战争模式：进攻 ●（F9）",
         "war_off": "战争模式：防御（F9）",
+        "war_need_mod": "战争组件未安装（tools\\install_war_mod.py）",
+        "war_need_restart": "战争组件未加载（需重启游戏）",
+        "war_on_msg": "战争模式：进攻",
+        "war_off_msg": "战争模式：防御",
+        "war_fail": "战争切换失败: ",
         "hotkey": "F8 全局热键",
         "hotkey_na": "F8 热键不可用（用按钮）",
         "waiting": "等待游戏…",
@@ -79,6 +84,11 @@ TEXTS = {
         "away_off": "Away mode: OFF",
         "war_on": "War mode: ATTACK ● (F9)",
         "war_off": "War mode: DEFEND (F9)",
+        "war_need_mod": "War component not installed (tools\\install_war_mod.py)",
+        "war_need_restart": "War component not loaded (restart the game)",
+        "war_on_msg": "War mode: attack",
+        "war_off_msg": "War mode: defend",
+        "war_fail": "War toggle failed: ",
         "hotkey": "F8 global hotkey",
         "hotkey_na": "F8 unavailable (use button)",
         "waiting": "Waiting for game...",
@@ -315,7 +325,7 @@ class App:
         try:
             import war_mode
             if not war_mode.mod_enabled():
-                self.info_lbl.config(text="战争组件未安装（tools\\install_war_mod.py）")
+                self.info_lbl.config(text=self.t("war_need_mod"))
                 return
         except Exception:
             pass
@@ -334,11 +344,11 @@ class App:
                     WAR_FILE.touch()
                 elif WAR_FILE.exists():
                     WAR_FILE.unlink()
-                self.info_lbl.config(text=("战争模式：进攻" if want_on else "战争模式：防御"))
+                self.info_lbl.config(text=self.t("war_on_msg") if want_on else self.t("war_off_msg"))
             else:
-                self.info_lbl.config(text="战争组件未加载（需重启游戏）")
+                self.info_lbl.config(text=self.t("war_need_restart"))
         except Exception as e:
-            self.info_lbl.config(text=("战争切换失败: " + str(e))[:48])
+            self.info_lbl.config(text=(self.t("war_fail") + str(e))[:60])
         try:
             self.war_btn.config(text=(self.t("war_on") if WAR_FILE.exists() else self.t("war_off")),
                                 fg=(FG_ON if WAR_FILE.exists() else FG_DIM))
