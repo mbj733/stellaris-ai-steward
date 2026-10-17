@@ -58,6 +58,10 @@ def validate():
                  "ai_steward_war.10", "ai_steward_war.11"):
         if must not in ids:
             problems.append("events: missing %s" % must)
+    if "queue_actions" not in ev:
+        problems.append("events: fleet move must use queue_actions")
+    if re.search(r"prev\s*=\s*\{\s*move_to", ev):
+        problems.append("events: bare move_to inside prev (must be queue_actions)")
 
     for p in required[-2:]:
         raw = p.read_bytes()
