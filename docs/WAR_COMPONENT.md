@@ -32,6 +32,8 @@ python tools\install_war_mod.py remove
 
 安装后**必须重启游戏**（mod 只在启动时加载）。`dlc_load.json` 会被自动加入/移除
 `mod/ai_steward_war.mod`，原文件留有带时间戳的备份。
+安装器还会把 mod 写入 Paradox 启动器的 active playset（`launcher-v2.sqlite`，
+enabled=1 / position=1），防止下次启动时启动器用 playset 覆盖 `dlc_load.json`。
 
 ## 验证
 
