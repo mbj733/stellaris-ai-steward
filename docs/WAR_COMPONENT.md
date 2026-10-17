@@ -74,5 +74,6 @@ event ai_steward_war.99    # 全部军用舰队回到首都星系（验证移动
   `Invalid context switch [solar_system] from ... [fleet]`（line 49）。已改为**星系级扫描**：
   `every_system` → 有敌方军用舰队 → `every_fleet_in_system`（我方军用舰队）→ `auto_follow_fleet`。
   这样不再需要 fleet→system 的 trigger 作用域切换。
+- 同时给 `space_owner` 加了 `exists = space_owner` 守卫（无主星系没有 owner，直接切会报错）。
 - 仍需**再重启一次**加载这两处修复（`space_owner` + `every_system`），然后由
   `war_mode.py verify` 确认防御/追击/移动分支。
