@@ -4,6 +4,12 @@
 
 > 🌐 **在线页面 / Landing page**：<https://mbj733.github.io/stellaris-ai-steward/>
 
+[![Release](https://img.shields.io/github/v/release/mbj733/stellaris-ai-steward)](https://github.com/mbj733/stellaris-ai-steward/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/mbj733/stellaris-ai-steward/total)](https://github.com/mbj733/stellaris-ai-steward/releases)
+[![Stars](https://img.shields.io/github/stars/mbj733/stellaris-ai-steward)](https://github.com/mbj733/stellaris-ai-steward)
+
+![AI Steward 面板与功能](docs/screenshots/hero_zh.png)
+
 > **EN**: A single-player Stellaris stewardship tool — auto-resolve events with a best-legal-choice
 > engine, one-tap AI autopilot, a floating in-game panel, and a full audit trail.
 > All operations are **runtime memory reads/writes on the running game process only**;
@@ -13,6 +19,12 @@
 > 所有操作均为对**运行中游戏进程的临时内存读写**，不修改任何游戏文件，游戏退出即全部还原。
 
 ---
+
+## ⬇️ 下载
+
+- **最新 Release**：<https://github.com/mbj733/stellaris-ai-steward/releases/latest>
+- 下载 `stellaris-ai-steward-vX.Y.Z.zip`，解压后双击 `install.bat`
+- 需要 Windows + Python 3.10+；不需要把任何文件放进游戏目录
 
 ## ✨ 功能 / Features
 
@@ -64,6 +76,8 @@ python tools\strategy_engine.py research physics --yes  # 神谕模式：直接�
 ```
 
 日志：`logs\decisions.log`（`[R1]` 事件处理 · `[R6]` 健康心跳 · `[审计]` 决策流水）。
+
+> ⭐ 如果这个项目帮你省了时间，点一个 **Star** 是最直接的帮助；有安装/兼容问题请开 Issue。
 
 ## 📦 可选增强（推荐）
 
