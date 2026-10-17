@@ -65,6 +65,8 @@ python tools\war_mode.py auto     # apply the staff recommendation (no auto-push
 python tools\strategy_engine.py status   # economic mode / consumer goods / alloys net
 python tools\strategy_engine.py apply    # switch military/civilian/balanced economy
 python tools\strategy_engine.py on|off   # allow/deny brain auto-apply
+python tools\strategy_engine.py research physics   # research audit (dry-run)
+python tools\strategy_engine.py research physics --yes  # oracle mode: grant the top tech (cheat)
 ```
 
 Logs: `logs\decisions.log` (`[R1]` event handling · `[R6]` health heartbeat · `[审计]` decision stream).

@@ -59,6 +59,8 @@ python tools\war_mode.py auto     # 按参谋建议切进攻/防御（敌军崩�
 python tools\strategy_engine.py status   # 经济模式/消费品/合金净收入
 python tools\strategy_engine.py apply    # 按审计切军事/民用/平衡经济
 python tools\strategy_engine.py on|off   # 允许/禁止大脑自动执行经济政策
+python tools\strategy_engine.py research physics   # 科研审计（dry-run）
+python tools\strategy_engine.py research physics --yes  # 神谕模式：直接授予推荐科技（作弊级）
 ```
 
 日志：`logs\decisions.log`（`[R1]` 事件处理 · `[R6]` 健康心跳 · `[审计]` 决策流水）。
