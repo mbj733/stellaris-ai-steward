@@ -61,6 +61,13 @@ echo [4/4] Self-test...
 echo.
 ".venv\Scripts\python.exe" tools\selftest_all.py
 echo.
+if /i "%~1"=="-y" goto war_done
+choice /c YN /n /m "Install optional war component (local mod, restart game once)? Y/N : "
+if errorlevel 2 goto war_done
+".venv\Scripts\python.exe" tools\install_war_mod.py install
+echo     War component installed. Restart the game once, then press F9 in the panel.
+:war_done
+echo.
 echo ================================================
 echo  Done!
 echo   - While the game is running, the steward works automatically

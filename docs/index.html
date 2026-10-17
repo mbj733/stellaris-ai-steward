@@ -295,6 +295,12 @@ footer{border-top:1px solid var(--line);padding:34px 0 46px;margin-top:10px}
         <p class="zh">每 10 分钟健康心跳；钩子 / 面板 / 进程全部自动恢复；一切决策双侧留痕。</p>
         <p class="en">10-minute health heartbeats; hooks, panel and processes all recover automatically; every decision is logged on both the game side and the tool side.</p>
       </div>
+      <div class="card">
+        <span class="ico">⚔</span>
+        <h3><span class="zh">战争组件（可选）</span><span class="en">War component (optional)</span></h3>
+        <p class="zh">战时自动接敌、同星系追击、空闲舰队增援最近受威胁星系；<b>F9</b> 可切到进攻模式（推进最近敌国）。需安装本地 mod 并重启游戏一次。</p>
+        <p class="en">Wartime auto-engage, in-system pursuit, and idle-fleet reinforcement of the nearest threatened system; <b>F9</b> switches to attack mode (push to the nearest enemy system). Requires a local mod and one game restart.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -352,6 +358,10 @@ footer{border-top:1px solid var(--line);padding:34px 0 46px;margin-top:10px}
             <td data-zh="人不在时打开：事件全自动应答 + 时间防冻结" data-en="Turn on when you step away: events get resolved automatically and the game clock never freezes">人不在时打开：事件全自动应答 + 时间防冻结</td>
           </tr>
           <tr>
+            <td><code data-zh="「战争模式」/ F9" data-en="War mode / F9">「战争模式」/ F9</code></td>
+            <td data-zh="默认防御（自动接敌 + 增援受威胁星系）；F9 切进攻（空闲舰队推进最近敌国）。需先安装战争组件并重启游戏" data-en="Default: defend (auto-engage + reinforce threatened systems); F9 switches to attack (idle fleets push to the nearest enemy system). Requires the war component and one game restart">默认防御（自动接敌 + 增援受威胁星系）；F9 切进攻（空闲舰队推进最近敌国）。需先安装战争组件并重启游戏</td>
+          </tr>
+          <tr>
             <td><code data-zh="引擎状态行" data-en="Engine line">引擎状态行</code></td>
             <td data-zh="实时读数：武装 N 条 · 改写 M 次 · 归属拦截 B · 待决 K" data-en="Live counters: armed N · rewrites M · blocked B · pending K">实时读数：武装 N 条 · 改写 M 次 · 归属拦截 B · 待决 K</td>
           </tr>
@@ -371,14 +381,14 @@ footer{border-top:1px solid var(--line);padding:34px 0 46px;margin-top:10px}
       <h2><span class="zh">⚠️ 免责声明</span><span class="en">⚠️ Disclaimer</span></h2>
       <ol class="zh">
         <li><b>仅限单人游戏使用</b>；请勿在联机对局中使用（联机使用后果自负）。</li>
-        <li>本工具<b>不修改任何游戏文件</b>：所有操作均为对运行中进程的临时内存读写，游戏重启即完全还原。</li>
+        <li>核心功能<b>不修改任何游戏文件</b>：所有操作均为对运行中进程的临时内存读写，游戏重启即完全还原。可选的战争组件会在用户文档目录写入一个本地 mod（可一键卸载），不改游戏安装目录。</li>
         <li>本工具不含任何游戏文件、美术资源或本地化文本，<b>不提供游戏本体下载</b>；Stellaris® 及相关内容版权归 Paradox Interactive 所有。本项目为社区个人作品，<b>与 Paradox Interactive 无任何关联，亦未获其背书</b>。</li>
         <li>使用前请<b>备份存档</b>；因使用本工具造成的任何存档或游戏问题，由使用者自行承担。</li>
         <li>本项目仅供<b>个人单机自动化与研究学习</b>用途。</li>
       </ol>
       <ol class="en">
         <li><b>Single-player use only</b> — do not use in multiplayer sessions.</li>
-        <li><b>Modifies nothing on disk</b>: runtime memory only, fully reverted when the game exits.</li>
+        <li>The core tool <b>modifies nothing on disk</b>: runtime memory only, fully reverted when the game exits. The optional war component writes a local mod under your Documents folder (removable), never into the game installation.</li>
         <li>Contains no game files, art, or localization text; <b>does not provide the game itself</b>. Stellaris® and related content are the property of Paradox Interactive. This is a community project, <b>not affiliated with or endorsed by Paradox Interactive</b>.</li>
         <li><b>Back up your saves</b>; any save or game issue caused by using this tool is your own responsibility.</li>
         <li>For <b>personal single-player automation and educational/research purposes</b> only.</li>

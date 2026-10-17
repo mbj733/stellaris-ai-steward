@@ -62,10 +62,33 @@ python tools\hook_rw88.py read    # 内存钩子状态（武装表 / 改写数 /
 想获得更聪明的决策（事件权重、选项名字、修正符参数），可自行从**本机游戏安装**生成：
 见 `data/README.md`（脚本顶部填你的游戏路径即可）。
 
+## ⚔ 可选：战争组件
+
+核心功能不写游戏文件；战争组件是一个**可选**的本地 mod（写入
+`Documents\Paradox Interactive\Stellaris\mod`，不改游戏安装目录，可一键卸载）：
+
+```bat
+:: 安装（之后重启游戏一次）
+python tools\install_war_mod.py install
+:: 查看战争/舰队姿态/进攻开关
+python tools\war_mode.py status
+:: 进攻模式：空闲舰队推进最近敌国星系
+python tools\war_mode.py on
+:: 防御模式（默认）
+python tools\war_mode.py off
+:: 卸载
+python tools\install_war_mod.py remove
+```
+
+面板上也有「战争模式」按钮（`F9`）：默认**自动防御**（同星系自动追击敌舰队、
+空闲舰队增援最近的本土受威胁星系），进攻模式需要手动开启。细节与边界见
+`docs/WAR_COMPONENT.md`。
+
 ## ⚠️ 免责声明 / Disclaimer
 
 1. **仅限单人游戏使用**；请勿在联机对局中使用（联机使用后果自负）。
-2. 本工具**不修改任何游戏文件**：所有操作均为对运行中进程的临时内存读写，游戏重启即完全还原。
+2. 核心功能**不修改任何游戏文件**：所有操作均为对运行中进程的临时内存读写，游戏重启即完全还原。
+   可选的战争组件会在用户文档目录写入一个本地 mod（可一键卸载），不改游戏安装目录。
 3. 本工具不含任何游戏文件、美术资源或本地化文本，**不提供游戏本体下载**；
    Stellaris® 及相关内容版权归 Paradox Interactive 所有。本项目为社区个人作品，
    **与 Paradox Interactive 无任何关联，亦未获其背书**。

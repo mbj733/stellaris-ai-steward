@@ -68,10 +68,35 @@ Logs: `logs\decisions.log` (`[R1]` event handling · `[R6]` health heartbeat · 
 For smarter decisions (event weights, option names, modifier parameters), generate the indexes
 yourself from your own game installation — see `data/README.md`.
 
+## ⚔ Optional: War Component
+
+The core tool writes nothing to disk. The war component is an **optional** local mod
+(installed under `Documents\Paradox Interactive\Stellaris\mod`, never into the game folder,
+removable with one command):
+
+```bat
+:: install, then restart the game once
+python tools\install_war_mod.py install
+:: wars / fleet stances / attack flag
+python tools\war_mode.py status
+:: attack mode: idle fleets push to the nearest enemy system
+python tools\war_mode.py on
+:: defend mode (default)
+python tools\war_mode.py off
+:: uninstall
+python tools\install_war_mod.py remove
+```
+
+The panel also has a "War mode" button (`F9`). **Defend mode is automatic** (local auto-engage +
+idle fleets reinforce the nearest threatened owned system); attack mode is manual. See
+`docs/WAR_COMPONENT.md` for details and limits.
+
 ## ⚠️ Disclaimer
 
 1. **Single-player use only** — do not use in multiplayer sessions.
-2. Modifies nothing on disk: runtime memory only, fully reverted when the game exits.
+2. The core tool modifies nothing on disk: runtime memory only, fully reverted when the game exits.
+   The optional war component writes a local mod under your Documents folder (removable), never
+   into the game installation.
 3. Contains no game files, art, or localization text; **does not provide the game itself**.
    Stellaris® and related content are the property of Paradox Interactive.
    This is a community project, **not affiliated with or endorsed by Paradox Interactive**.

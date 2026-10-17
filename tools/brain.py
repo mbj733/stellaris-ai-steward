@@ -748,7 +748,8 @@ class Brain:
             # ---- 建议栏：识别可行动状态（有变化才输出，避免刷屏） ----
             advs = []
             if d.get("own_wars"):
-                advs.append(f"⚠ 你正卷入 {d['own_wars']} 处战争，留意前线与外交")
+                advs.append(f"⚠ 你正卷入 {d['own_wars']} 处战争；战争组件自动防御，"
+                            f"要主动推进按 F9（或 war_mode.py on）")
             elif d.get("wars"):
                 advs.append(f"银河存在战争（{d['wars']} 处），我方暂未参战")
             if d.get("situations"):
