@@ -6,7 +6,7 @@
   "cg_safe_ratio": 0.15,
   "military_econ_cg_ratio": 0.25,
   "weak_fleet_power": 5000,
-  "auto_renegotiate": false,
+  "auto_renegotiate": true,
   "auto_build_cg": false,
   "auto_independence": false
 }

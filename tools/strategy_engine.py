@@ -149,10 +149,30 @@ def apply():
               % ("ON" if s["conserve"] else "OFF", ev, r.get("ok"), r.get("message")))
         if r.get("ok"):
             changed = True
+    dyn = sa.load_json(ROOT / "policy" / "strategy_dynamic.json", {})
+    if dyn.get("auto_renegotiate") and s["renegotiate_ready"] and not st.get("renegotiated"):
+        if h is None:
+            h, pid, base = ce.open_game()
+        r = ce.execute_command(h, base, "event ai_steward_war.25")
+        print("auto-renegotiate -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+        if r.get("ok"):
+            st["renegotiated"] = True
+            changed = True
+    if dyn.get("auto_independence") and s["independence_ready"] and not st.get("independent"):
+        if h is None:
+            h, pid, base = ce.open_game()
+        r = ce.execute_command(h, base, "war 0 %s wg_independence" % s["overlord"])
+        print("auto-independence -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+        if r.get("ok"):
+            st["independent"] = True
+            changed = True
     if changed:
         STATE.write_text(json.dumps({"mode": s["mode"], "conserve": s["conserve"],
                                      "date": s["date"], "cg": s["cg"],
-                                     "alloy": s["alloy"]}), encoding="utf-8")
+                                     "alloy": s["alloy"],
+                                     "renegotiated": bool(st.get("renegotiated")),
+                                     "independent": bool(st.get("independent"))}),
+                         encoding="utf-8")
     else:
         print("no change")
 
@@ -244,6 +264,19 @@ def build_cg(yes=False):
     print("event ai_steward_war.26 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
 
 
+def add_cg_districts(yes=False):
+    s = snapshot()
+    show(s)
+    print("add 25 industrial districts to the factory world (ignore cap; cheat-level)")
+    if not yes:
+        print("dry-run; add --yes to execute")
+        return
+    import console_exec as ce
+    h, pid, base = ce.open_game()
+    r = ce.execute_command(h, base, "event ai_steward_war.27")
+    print("event ai_steward_war.27 -> ok=%s message=%r" % (r.get("ok"), r.get("message")))
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "status"
     if mode == "status":
@@ -266,6 +299,8 @@ def main():
         renegotiate("--yes" in sys.argv)
     elif mode == "build-cg":
         build_cg("--yes" in sys.argv)
+    elif mode == "add-cg-districts":
+        add_cg_districts("--yes" in sys.argv)
     else:
         print(__doc__)
 

@@ -62,6 +62,7 @@
 - 弱舰队阈值 `weak_fleet_power` 在安装 mod 时写入（默认 5000）。
 
 `strategy_engine.py status` 会实时显示 ratio、宗主疲劳、renegotiate/independence 是否 ready。
+`auto_renegotiate` 默认开启：达到改约窗口会自动执行 `.25`；独立仍默认手动。
 
 ## 立即可用的命令
 

@@ -21,7 +21,7 @@ LAUNCHER_DB = DOC / "launcher-v2.sqlite"
 
 DESC = (
     'name="AI Steward: War Component"\n'
-    'version="0.7.2"\n'
+    'version="0.8.1"\n'
     "tags={\n"
     '\t"Gameplay"\n'
     "}\n"
@@ -401,6 +401,21 @@ country_event = {
 \t}
 }
 
+# 结构性救济（作弊级）：给工厂世界加工业区，快速补消费品岗位
+country_event = {
+\tid = ai_steward_war.27
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tordered_owned_colony = {
+\t\t\tlimit = { has_designation = col_factory }
+\t\t\tposition = 0
+\t\t\tadd_building = building_factory_3
+\t\t}
+\t}
+}
+
 # 诊断：把全部军用舰队移动回首都星系（仅手动触发，用于验证移动链路）
 country_event = {
 \tid = ai_steward_war.99
@@ -476,7 +491,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                 con.execute(
                     "UPDATE mods SET displayName=?, version=?, dirPath=?, "
                     "status='ready_to_play', timeUpdated=? WHERE id=?",
-                    ("AI Steward: War Component", "0.7.2", str(mod_dir),
+                    ("AI Steward: War Component", "0.8.1", str(mod_dir),
                      int(time.time()), mid))
             else:
                 mid = str(uuid.uuid4())
@@ -485,7 +500,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                     "requiredVersion, dirPath, status, source, timeUpdated, "
                     "isMetadataApplied, metadataStatus, keepLatest) "
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (mid, ENTRY, "AI Steward: War Component", "0.7.2",
+                    (mid, ENTRY, "AI Steward: War Component", "0.8.1",
                      '["Gameplay"]', "4.5.*", str(mod_dir),
                      "ready_to_play", "local", int(time.time()), 0, "not_applied", 1))
             exists = con.execute("SELECT 1 FROM playsets_mods WHERE playsetId=? AND modId=?",
