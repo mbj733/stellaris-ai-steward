@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-DOC = Path.home() / "Documents" / "Paradox Interactive" / "Stellaris"
+DOC = Path(r"C:\Users\Administrator\Documents\Paradox Interactive\Stellaris")
 MODDIR = DOC / "mod"
 MOD = MODDIR / "ai_steward_war"
 ENTRY = "mod/ai_steward_war.mod"
@@ -167,6 +167,29 @@ country_event = {
 
 \timmediate = {
 \t\tremove_country_flag = ai_steward_war_offensive
+\t}
+}
+
+# 诊断：把全部军用舰队移动回首都星系（仅手动触发，用于验证移动链路）
+country_event = {
+\tid = ai_steward_war.99
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tcapital_scope = {
+\t\t\tsolar_system = {
+\t\t\t\tsave_event_target_as = ai_steward_home_system
+\t\t\t}
+\t\t}
+\t\tevery_owned_fleet = {
+\t\t\tlimit = {
+\t\t\t\tis_ship_class = shipclass_military
+\t\t\t}
+\t\t\tqueue_actions = {
+\t\t\t\tmove_to = event_target:ai_steward_home_system
+\t\t\t}
+\t\t}
 \t}
 }
 """
