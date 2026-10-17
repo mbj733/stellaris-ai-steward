@@ -53,11 +53,33 @@ country_event = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t}
-\t\t\t\tset_fleet_stance = aggressive
+\t\t\t\tif = {
+\t\t\t\t\tlimit = {
+\t\t\t\t\t\tfleet_power < 5000
+\t\t\t\t\t\tNOT = { is_in_combat = yes }
+\t\t\t\t\t}
+\t\t\t\t\tset_fleet_stance = evasive
+\t\t\t\t\tset_fleet_flag = ai_steward_weak
+\t\t\t\t}
+\t\t\t\telse = {
+\t\t\t\t\tif = {
+\t\t\t\t\t\tlimit = { has_fleet_flag = ai_steward_weak }
+\t\t\t\t\t\tremove_fleet_flag = ai_steward_weak
+\t\t\t\t\t}
+\t\t\t\t\tset_fleet_stance = aggressive
+\t\t\t\t}
 \t\t\t}
 \t\t}
 \t\telse = {
 \t\t\tremove_country_flag = ai_steward_war_offensive
+\t\t\tevery_owned_fleet = {
+\t\t\t\tlimit = {
+\t\t\t\t\tis_ship_class = shipclass_military
+\t\t\t\t\thas_fleet_flag = ai_steward_weak
+\t\t\t\t}
+\t\t\t\tremove_fleet_flag = ai_steward_weak
+\t\t\t\tset_fleet_stance = aggressive
+\t\t\t}
 \t\t}
 \t}
 }
@@ -97,6 +119,7 @@ country_event = {
 \t\t\t\t\towner = { is_same_value = root }
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t\tNOT = { is_in_combat = yes }
+\t\t\t\t\tfleet_power >= 5000
 \t\t\t\t}
 \t\t\t\tauto_follow_fleet = {
 \t\t\t\t\ttarget = event_target:ai_steward_enemy_fleet
@@ -112,6 +135,7 @@ country_event = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t\tis_fleet_idle = yes
+\t\t\t\t\tfleet_power >= 5000
 \t\t\t\t}
 \t\t\t\tclosest_system = {
 \t\t\t\t\tlimit = {
@@ -132,6 +156,7 @@ country_event = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
 \t\t\t\t\tis_fleet_idle = yes
+\t\t\t\t\tfleet_power >= 5000
 \t\t\t\t}
 \t\t\t\tclosest_system = {
 \t\t\t\t\tlimit = {

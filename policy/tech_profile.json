@@ -1,0 +1,32 @@
+{
+  "_note": "科技优先级。overrides 里的科技一旦出现必选（数值越大越优先）；其余按 类别权重 + 层级分 打分。手册 开局方案.md 推荐的科技已内置。",
+  "category_weights": {
+    "computing": 3.0,
+    "field_manipulation": 3.0,
+    "industry": 3.0,
+    "materials": 3.0,
+    "new_worlds": 3.0,
+    "biology": 2.5,
+    "particles": 2.0,
+    "propulsion": 2.0,
+    "voidcraft": 2.0,
+    "statecraft": 2.0,
+    "military_theory": 1.5,
+    "archaeostudies": 1.0,
+    "psionics": 1.0,
+    "curator": 1.0,
+    "mercenary": 0.8
+  },
+  "tier_weight": 0.6,
+  "rare_bonus": 0.8,
+  "overrides": {
+    "tech_automated_exploration": 30,
+    "tech_genome_mapping": 15,
+    "tech_global_research_initiative": 12,
+    "tech_powered_exoskeletons": 10,
+    "tech_planetary_unification": 10,
+    "tech_colonial_centralization": 8,
+    "tech_galactic_administration": 8
+  },
+  "never_take": []
+}

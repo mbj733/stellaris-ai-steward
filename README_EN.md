@@ -58,6 +58,10 @@ python tools\selftest_all.py      # full system self-test (16 checks)
 python tools\digest.py            # digest: what happened while you were away
 python tools\soak_report.py --since "YYYY-MM-DD HH:MM"   # period quality report
 python tools\hook_rw88.py read    # memory hook status (armed / rewrites / blocked)
+python tools\war_audit.py         # war staff: side power / exhaustion / local balance
+python tools\strategy_audit.py    # research / traditions / policies / economy audit
+python tools\war_mode.py audit    # war staff (read-only)
+python tools\war_mode.py auto     # apply the staff recommendation (no auto-push if enemy collapsed)
 ```
 
 Logs: `logs\decisions.log` (`[R1]` event handling · `[R6]` health heartbeat · `[审计]` decision stream).

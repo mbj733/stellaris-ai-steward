@@ -52,6 +52,10 @@ python tools\selftest_all.py      # 全系统自检（16 项）
 python tools\digest.py            # 回归摘要：这段时间发生了什么
 python tools\soak_report.py --since "YYYY-MM-DD HH:MM"   # 时段质量报告
 python tools\hook_rw88.py read    # 内存钩子状态（武装表 / 改写数 / 归属拦截）
+python tools\war_audit.py         # 战争参谋：双方军力/疲劳/局部兵力/集中度
+python tools\strategy_audit.py    # 科研/传统/政策/经济全面审计
+python tools\war_mode.py audit    # 战争参谋（只读）
+python tools\war_mode.py auto     # 按参谋建议切进攻/防御（敌军崩溃不自动推进）
 ```
 
 日志：`logs\decisions.log`（`[R1]` 事件处理 · `[R6]` 健康心跳 · `[审计]` 决策流水）。

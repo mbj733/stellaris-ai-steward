@@ -153,6 +153,7 @@ class Brain:
         self.prev_mil, self.last_techs, self.last_fleet, self.fleet_streak = load_state()
         self.prev_own_wars = None
         self.last_r5 = 0.0
+        self.last_strategy = 0.0
         self.last_vals = None
         self.prev_advs = ""
         self.was_connected = False
@@ -720,6 +721,20 @@ class Brain:
             _sv, gs2 = sr.load()
             d = sr.digest(gs2)
             log("[R5] 任务摘要：" + sr.digest_line(gs2))
+            if time.time() - self.last_strategy > 1800:
+                self.last_strategy = time.time()
+                try:
+                    import subprocess
+                    r = subprocess.run(
+                        [sys.executable, str(ROOT / "tools" / "strategy_audit.py")],
+                        capture_output=True, text=True, encoding="utf-8",
+                        errors="replace", timeout=90)
+                    out = r.stdout or ""
+                    picks = [ln.strip() for ln in out.splitlines() if "→" in ln]
+                    if picks:
+                        log("[R9] 战略参谋：" + "；".join(picks[:4]))
+                except Exception as ex:
+                    log(f"[R9] 战略参谋异常：{ex}")
             # R9 战争守护：我方战争数变化即报警（新战争 / 战争结束/被附庸）
             ow = int(d.get("own_wars") or 0)
             if self.prev_own_wars is None:

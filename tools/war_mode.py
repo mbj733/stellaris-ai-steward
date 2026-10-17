@@ -5,6 +5,8 @@
   python war_mode.py on       开启进攻模式（事件 ai_steward_war.10）
   python war_mode.py off      关闭进攻模式（事件 ai_steward_war.11）
   python war_mode.py verify   验战争组件是否加载（error.log + 存档舰队状态）
+  python war_mode.py audit    战争参谋：双方军力/疲劳/局部兵力/集中度（只读）
+  python war_mode.py auto     按参谋建议自动切换进攻/防御（会执行事件）
 """
 import sys
 import json
@@ -133,6 +135,42 @@ def verify():
     print("[PASS] 战争组件已加载，无脚本错误" if ok else "[CHECK] 见上方条目")
 
 
+def run_audit():
+    import subprocess
+
+    script = Path(__file__).with_name("war_audit.py")
+    try:
+        r = subprocess.run([sys.executable, str(script)], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=120)
+        return (r.stdout or "") + (r.stderr or "")
+    except Exception as e:
+        return "audit failed: %r" % (e,)
+
+
+def auto_mode():
+    out = run_audit()
+    print(out)
+    rec = ""
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith(("PRESS/PEACE", "ATTACK", "DEFEND", "HOLD")):
+            rec = s
+    # Only auto-attack on a real advantage while the enemy is still fighting.
+    # If the enemy is already collapsed on exhaustion (PRESS/PEACE), pushing is
+    # often unnecessary; leave defense on and let the player take the war goal.
+    want_on = rec.startswith("ATTACK")
+    print("参谋结论:", rec or "无（可能不在战争）")
+    if rec.startswith("PRESS"):
+        print("敌军已崩溃：不自动进攻，优先战争目标/现状和平；需要推进请手动 F9")
+    print("将切换为:", "进攻" if want_on else "防御")
+    import console_exec as ce
+
+    h, pid, base = ce.open_game()
+    ev = "ai_steward_war.10" if want_on else "ai_steward_war.11"
+    r = ce.execute_command(h, base, "event " + ev)
+    print("执行 event %s -> ok=%s message=%r" % (ev, r.get("ok"), r.get("message")))
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "status"
     if mode == "status":
@@ -141,6 +179,10 @@ def main():
         toggle(mode == "on")
     elif mode == "verify":
         verify()
+    elif mode == "audit":
+        print(run_audit())
+    elif mode == "auto":
+        auto_mode()
     else:
         print(__doc__)
 
