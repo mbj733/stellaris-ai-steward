@@ -166,7 +166,7 @@ def main():
                   if isinstance(countries.get(x), dict))
     enemy_mil = sum(f((countries.get(x) or {}).get("military_power")) for x in enemy_side
                     if isinstance(countries.get(x), dict))
-    ratio = our_mil / enemy_mil if enemy_mil else 0
+    ratio = our_mil / enemy_mil if enemy_mil else float("inf")
     danger = [s for s, v in contested
               if s not in ("4294967295", "None", "")
               and v["enemy"] > 1.5 * (v["us"] + v["ally"])]
@@ -183,7 +183,9 @@ def main():
     print("\n== recommendation ==")
     print("  side power ratio=%.2f | exhaustion %.2f vs %.2f | local danger=%s"
           % (ratio, our_ex, enemy_ex, danger[:6]))
-    if enemy_ex >= 5 and ratio >= 2:
+    if enemy_mil <= 0 and enemy_ex >= 5:
+        print("  PRESS/PEACE: enemy has no military and is exhausted; take the war goal/status quo.")
+    elif enemy_ex >= 5 and ratio >= 2:
         print("  PRESS/PEACE: enemy is collapsed on exhaustion; take the war goal or status quo,"
               " avoid unnecessary fleet losses.")
     elif ratio < 0.8 or our_ex > enemy_ex + 2:

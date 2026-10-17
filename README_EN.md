@@ -62,6 +62,9 @@ python tools\war_audit.py         # war staff: side power / exhaustion / local b
 python tools\strategy_audit.py    # research / traditions / policies / economy audit
 python tools\war_mode.py audit    # war staff (read-only)
 python tools\war_mode.py auto     # apply the staff recommendation (no auto-push if enemy collapsed)
+python tools\strategy_engine.py status   # economic mode / consumer goods / alloys net
+python tools\strategy_engine.py apply    # switch military/civilian/balanced economy
+python tools\strategy_engine.py on|off   # allow/deny brain auto-apply
 ```
 
 Logs: `logs\decisions.log` (`[R1]` event handling · `[R6]` health heartbeat · `[审计]` decision stream).

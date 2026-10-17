@@ -733,6 +733,14 @@ class Brain:
                     picks = [ln.strip() for ln in out.splitlines() if "→" in ln]
                     if picks:
                         log("[R9] 战略参谋：" + "；".join(picks[:4]))
+                    if (ROOT / "tools" / "_strategy_auto.flag").exists():
+                        r2 = subprocess.run(
+                            [sys.executable, str(ROOT / "tools" / "strategy_engine.py"), "apply"],
+                            capture_output=True, text=True, encoding="utf-8",
+                            errors="replace", timeout=90)
+                        tail = (r2.stdout or "").strip().splitlines()
+                        if tail:
+                            log("[R9] 战略执行：" + tail[-1][:120])
                 except Exception as ex:
                     log(f"[R9] 战略参谋异常：{ex}")
             # R9 战争守护：我方战争数变化即报警（新战争 / 战争结束/被附庸）

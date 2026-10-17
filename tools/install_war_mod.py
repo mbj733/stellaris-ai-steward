@@ -21,7 +21,7 @@ LAUNCHER_DB = DOC / "launcher-v2.sqlite"
 
 DESC = (
     'name="AI Steward: War Component"\n'
-    'version="0.4.0"\n'
+    'version="0.6.0"\n'
     "tags={\n"
     '\t"Gameplay"\n'
     "}\n"
@@ -52,6 +52,7 @@ country_event = {
 \t\t\tevery_owned_fleet = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
+\t\t\t\t\tNOT = { has_fleet_flag = dimensional_fleet }
 \t\t\t\t}
 \t\t\t\tif = {
 \t\t\t\t\tlimit = {
@@ -81,6 +82,37 @@ country_event = {
 \t\t\t\tset_fleet_stance = aggressive
 \t\t\t}
 \t\t}
+\t\t# 经济政策：由战略引擎设置 flag；每月重申，覆盖游戏 AI 的回退
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\thas_country_flag = ai_steward_econ_civilian
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_civilian
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\thas_country_flag = ai_steward_econ_military
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_military
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\thas_country_flag = ai_steward_econ_balanced
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_balanced
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
 \t}
 }
 
@@ -99,6 +131,13 @@ country_event = {
 \t\t# 1) 同星系接敌：扫描星系；有敌方军用舰队时，命令该星系内我方军用舰队追击
 \t\tevery_system = {
 \t\t\tlimit = {
+\t\t\t\tOR = {
+\t\t\t\t\tNOT = { root = { has_country_flag = ai_steward_conserve } }
+\t\t\t\t\tAND = {
+\t\t\t\t\t\texists = space_owner
+\t\t\t\t\t\tspace_owner = { is_same_value = root }
+\t\t\t\t\t}
+\t\t\t\t}
 \t\t\t\tany_fleet_in_system = {
 \t\t\t\t\texists = owner
 \t\t\t\t\towner = { is_hostile = root }
@@ -130,7 +169,10 @@ country_event = {
 
 \t\t# 2) 空闲舰队：进攻模式→最近敌国星系；否则→最近的本土受威胁星系
 \t\tif = {
-\t\t\tlimit = { has_country_flag = ai_steward_war_offensive }
+\t\t\tlimit = {
+\t\t\t\thas_country_flag = ai_steward_war_offensive
+\t\t\t\tNOT = { has_country_flag = ai_steward_conserve }
+\t\t\t}
 \t\t\tevery_owned_fleet = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
@@ -152,6 +194,35 @@ country_event = {
 \t\t\t}
 \t\t}
 \t\telse = {
+\t\t\t# 首都受威胁：所有强舰队集中回防首都
+\t\t\tif = {
+\t\t\t\tlimit = {
+\t\t\t\t\tcapital_scope = {
+\t\t\t\t\t\tsolar_system = {
+\t\t\t\t\t\t\tany_fleet_in_system = {
+\t\t\t\t\t\t\t\texists = owner
+\t\t\t\t\t\t\t\towner = { is_hostile = root }
+\t\t\t\t\t\t\t}
+\t\t\t\t\t\t}
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t\tcapital_scope = {
+\t\t\t\t\tsolar_system = {
+\t\t\t\t\t\tsave_event_target_as = ai_steward_capital
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t\tevery_owned_fleet = {
+\t\t\t\t\tlimit = {
+\t\t\t\t\t\tis_ship_class = shipclass_military
+\t\t\t\t\t\tis_fleet_idle = yes
+\t\t\t\t\t\tfleet_power >= 5000
+\t\t\t\t\t}
+\t\t\t\t\tqueue_actions = {
+\t\t\t\t\t\tmove_to = event_target:ai_steward_capital
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t}
+\t\t\telse = {
 \t\t\tevery_owned_fleet = {
 \t\t\t\tlimit = {
 \t\t\t\t\tis_ship_class = shipclass_military
@@ -174,6 +245,7 @@ country_event = {
 \t\t\t\t\t\t}
 \t\t\t\t\t}
 \t\t\t\t}
+\t\t\t}
 \t\t\t}
 \t\t}
 \t}
@@ -198,6 +270,96 @@ country_event = {
 
 \timmediate = {
 \t\tremove_country_flag = ai_steward_war_offensive
+\t}
+}
+
+# 经济政策：军事经济（由战略引擎在消费品安全余量充足时触发）
+country_event = {
+\tid = ai_steward_war.20
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tset_country_flag = ai_steward_econ_military
+\t\tremove_country_flag = ai_steward_econ_civilian
+\t\tremove_country_flag = ai_steward_econ_balanced
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\tcan_set_policy = { policy = economic_policy option = economic_policy_military }
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_military
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
+\t}
+}
+
+# 经济政策：民用经济（消费品为负、合金仍有安全余量时触发）
+country_event = {
+\tid = ai_steward_war.21
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tset_country_flag = ai_steward_econ_civilian
+\t\tremove_country_flag = ai_steward_econ_military
+\t\tremove_country_flag = ai_steward_econ_balanced
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\tcan_set_policy = { policy = economic_policy option = economic_policy_civilian }
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_civilian
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
+\t}
+}
+
+# 经济政策：平衡经济（默认/和平期）
+country_event = {
+\tid = ai_steward_war.22
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tset_country_flag = ai_steward_econ_balanced
+\t\tremove_country_flag = ai_steward_econ_military
+\t\tremove_country_flag = ai_steward_econ_civilian
+\t\tif = {
+\t\t\tlimit = {
+\t\t\t\tcan_set_policy = { policy = economic_policy option = economic_policy_balanced }
+\t\t\t}
+\t\t\tset_policy = {
+\t\t\t\tpolicy = economic_policy
+\t\t\t\toption = economic_policy_balanced
+\t\t\t\tcooldown = no
+\t\t\t}
+\t\t}
+\t}
+}
+
+# 保存舰队：宗主战争里只在自家星系自动接敌，避免当炮灰（等独立窗口）
+country_event = {
+\tid = ai_steward_war.23
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tset_country_flag = ai_steward_conserve
+\t}
+}
+
+country_event = {
+\tid = ai_steward_war.24
+\thide_window = yes
+\tis_triggered_only = yes
+
+\timmediate = {
+\t\tremove_country_flag = ai_steward_conserve
 \t}
 }
 
@@ -267,7 +429,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                 con.execute(
                     "UPDATE mods SET displayName=?, version=?, dirPath=?, "
                     "status='ready_to_play', timeUpdated=? WHERE id=?",
-                    ("AI Steward: War Component", "0.4.0", str(mod_dir),
+                    ("AI Steward: War Component", "0.6.0", str(mod_dir),
                      int(time.time()), mid))
             else:
                 mid = str(uuid.uuid4())
@@ -276,7 +438,7 @@ def update_launcher_db(add=True, mod_dir=MOD):
                     "requiredVersion, dirPath, status, source, timeUpdated, "
                     "isMetadataApplied, metadataStatus, keepLatest) "
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (mid, ENTRY, "AI Steward: War Component", "0.4.0",
+                    (mid, ENTRY, "AI Steward: War Component", "0.6.0",
                      '["Gameplay"]', "4.5.*", str(mod_dir),
                      "ready_to_play", "local", int(time.time()), 0, "not_applied", 1))
             exists = con.execute("SELECT 1 FROM playsets_mods WHERE playsetId=? AND modId=?",

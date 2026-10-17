@@ -162,6 +162,35 @@ def main():
     if pol.get("orbital_bombardment") == "orbital_bombardment_indiscriminate":
         print("  → 无差别轰炸会破坏可占领星球，征服战建议选择性轰炸")
 
+    # ---- subject / overlord ----
+    ov = c0.get("overlord")
+    if ov and str(ov) not in ("", "none", "4294967295"):
+        ov = str(ov)
+        ovc = (gs.get("country") or {}).get(ov) or {}
+        ov_mil = f(ovc.get("military_power"))
+        mine = f(c0.get("military_power"))
+        ags = (gs.get("agreements") or {}).get("agreements") or {}
+        ag = None
+        for _k, v in ags.items():
+            if isinstance(v, dict) and str(v.get("target")) == "0" and v.get("active_status") == "active":
+                ag = v
+                break
+        terms = (ag or {}).get("term_data") or {}
+        preset = terms.get("agreement_preset", "?")
+        loyalty = f(c0.get("loyalty"))
+        print("\n== subject status ==")
+        print("  overlord=%s (id %s) mil=%.0f | ours=%.0f | ratio=%.3f | loyalty=%.0f"
+              % (loc.get((ovc.get("name") or {}).get("key"), (ovc.get("name") or {}).get("key", ov))
+                 if isinstance(ovc.get("name"), dict) else ov, ov, ov_mil, mine,
+                 mine / ov_mil if ov_mil else 0, loyalty))
+        print("  agreement=%s | joins_wars=%s | expand=%s"
+              % (preset, terms.get("joins_overlord_wars", "?"),
+                 terms.get("subject_expansion_type", "?")))
+        if mine < ov_mil * 0.5:
+            print("  → 你是宗主国的附属国，独立战争现在不可行；保存舰队、扩张、等宗主被战争削弱")
+        else:
+            print("  → 你的军力已接近/超过宗主，留意独立窗口")
+
     # ---- economy ----
     b = ((c0.get("budget") or {}).get("current_month") or {})
     inc, exp = {k: 0.0 for k in KEYS}, {k: 0.0 for k in KEYS}
@@ -189,6 +218,15 @@ def main():
         print("\n== war ==")
         print("  side military %.0f vs %.0f | exhaustion %.2f vs %.2f"
               % (our_mil, enemy_mil, our_ex, enemy_ex))
+        ratio = our_mil / enemy_mil if enemy_mil else 999.0
+        if enemy_mil <= 0 and enemy_ex >= 5:
+            print("  → 战争：敌军已无军力，战争已胜；拿战争目标/现状和平")
+        elif enemy_ex >= 5 and ratio >= 2:
+            print("  → 战争：敌军已崩溃，优先战争目标/现状和平")
+        elif ratio > 1.25:
+            print("  → 战争：优势，集中后推进")
+        elif ratio < 0.8:
+            print("  → 战争：劣势，防御/求和")
         print("  （详细局部兵力/集中度见 war_audit.py）")
 
 

@@ -56,6 +56,9 @@ python tools\war_audit.py         # 战争参谋：双方军力/疲劳/局部兵
 python tools\strategy_audit.py    # 科研/传统/政策/经济全面审计
 python tools\war_mode.py audit    # 战争参谋（只读）
 python tools\war_mode.py auto     # 按参谋建议切进攻/防御（敌军崩溃不自动推进）
+python tools\strategy_engine.py status   # 经济模式/消费品/合金净收入
+python tools\strategy_engine.py apply    # 按审计切军事/民用/平衡经济
+python tools\strategy_engine.py on|off   # 允许/禁止大脑自动执行经济政策
 ```
 
 日志：`logs\decisions.log`（`[R1]` 事件处理 · `[R6]` 健康心跳 · `[审计]` 决策流水）。
